@@ -1,0 +1,514 @@
+==============================================================
+開眼シェルスクリプト 第19回 シェルスクリプトでCGIスクリプト1
+==============================================================
+
+　今回から何回かは、連載当初からいつかやるはめになると考えていた
+CGIスクリプトを作るというお題を扱います。
+
+　CGIというのは common gateway interface の略で、
+単純に言うとブラウザから
+ウェブサーバに置いてあるプログラムを起動するための仕様です。
+CGIという言葉は interface を指すので、
+CGIで動く（動かされる）プログラムのことは、
+CGIプログラムと言ったりCGIスクリプトと言ったりする方が丁寧です。
+スクリプト言語で書いた場合はCGIスクリプトと言うのがよいでしょう。
+
+　CGIプログラムは、どんな言語で作っても構いません。
+C言語で書いても良いわけですが、
+この領域ではlightweight language（LL言語）で書かれることがほとんどであり、
+伝統的にはperl、php、最近ではruby、pythonもよく使われます。
+
+　そこにシェルスクリプトを加えてやろうというのが今回から数回の内容です。
+シェルスクリプトは簡単にOSのコマンドが使えるので大丈夫かいなとよく言われます。
+確かにウェブでデータをやりとりするという目的に比べると、
+シェルスクリプトでできることはそれを遥かに超越しており、
+しかも文字数少なく邪悪なことができてしまいます。
+``rm -Rf /`` （8文字！）とか。
+
+　しかし、「インジェクションを食らいやすいかどうか」という観点においては、
+気をつけていれば言語レベルでは他の言語と大差なく、
+むしろ食らいにくいんじゃないかなと筆者は考えています。
+世間での書き方のガイドラインが未成熟なだけで、
+シェルスクリプトでCGIをやると危ないというのは短絡的で相手を知らなさすぎます。
+食わず嫌いはいけません。
+
+　「女をよくいうひとは、女を十分知らないものであり、女をいつも悪くいう人は、
+女を全く知らないものである。」
+--- モーリス・ルブラン「怪盗アルセーヌ・ルパン」
+
+　 ``sed 's/女/シェルスクリプト/g'`` して音読してから、
+先にお進みください。
+
+Apacheを準備
+==============================================================
+
+　今回想定する環境はbash、Apache が動くUNIX系の環境です。
+筆者は手元で動かしたいので今回もMacを使います。
+Linuxで動かす場合については情報が大量にweb上にあるので、
+ここで説明しなくても大丈夫でしょう。
+
+　筆者もこれを執筆中に初めて知ったのですが、
+OS Xには最初からapache がバンドルされていて、
+すぐ使えるようになっています。
+
+　リスト1のようにコマンドを打つと、apacheが起動します。
+
+* リスト1: apacheを立ち上げる
+
+.. code-block:: bash
+	:linenos:
+	
+	uedamac:apache2 ueda$ sudo -s
+	bash-3.2# apachectl start
+	org.apache.httpd: Already loaded
+	bash-3.2# ps cax | grep httpd
+	16023   ??  Ss     0:00.15 httpd
+	16024   ??  S      0:00.00 httpd
+
+　本連載の読者ならば、動作確認はブラウザじゃなくて
+リスト2のようにcurlでやりましょう。
+
+* リスト2: curlで動作確認
+
+.. code-block:: bash
+	:linenos:
+	
+	uedamac:apache2 ueda$ curl http://localhost
+	<html><body><h1>It works!</h1></body></html>
+
+　次に、リスト3のように、cgiを置くディレクトリを確認します。
+CGIプログラムは ``cgi-bin`` というところに置く事が多いので、
+``cgi-bin`` で設定ファイル（ ``httpd.conf`` ）を検索します。
+検索はエディタを開いて、そのエディタの機能で行っても構いません。
+ただ、こういった記事や説明手順を書くときは、
+シェルの操作を行ったような体裁の方が分かりやすく書けます。
+さっきのcurlも、ブラウザのスクリーンショットを掲載するより楽です。
+きっとコミュニケーションのコストに違いがあるのでしょう。
+案外大事な余談でした。
+
+* リスト3: ``cgi-bin`` の場所を調査
+
+.. code-block:: bash
+	:linenos:
+	
+	uedamac:~ ueda$ apachectl -V | grep conf
+	 -D SERVER_CONFIG_FILE="/private/etc/apache2/httpd.conf"
+
+	uedamac:~ ueda$ cat /private/etc/apache2/httpd.conf | grep cgi-bin
+	    ScriptAliasMatch ^/cgi-bin/((?!(?i:webobjects)).*$) "/Library/WebServer/CGI-Executables/$1"
+	#ErrorDocument 404 "/cgi-bin/missing_handler.pl"
+
+　確認の結果、 ``/Library/WebServer/CGI-Executables/`` という、
+きったねえ名前のディレクトリで動くことが分かりました。
+今回は大変遺憾ですが、ここにCGIスクリプトを置く事にします。
+いちいちこのディレクトリを覚えておくのは面倒なので、
+リスト4のように自分のホームの下にシンボリックリンクを張りましょう。
+どうせ自分しか使わないので、所有者も変えておきます。
+
+* リスト4: ホームから簡単にアクセスできるようにする
+
+.. code-block:: bash
+	:linenos:
+	
+	uedamac:~ ueda$ ln -s /Library/WebServer/CGI-Executables/ ./cgi-bin
+	uedamac:~ ueda$ cd cgi-bin
+	uedamac:cgi-bin ueda$ sudo chown ueda:wheel ./
+
+CGIプログラムとはなんぞや？=>ただのプログラム
+==============================================================
+
+　さあ作業開始です。最初にやるのはCGIプログラムを動かすことです。
+CGIプログラムと聞くと何か特別なものだと考えている人が多いので、
+その誤解を解いておきましょう。ちょっとした実験をします。
+
+　まず、 ``/tmp/`` の下に ``hoge`` というファイルを作り、
+所有者をapacheの実行ユーザに変えておきます。
+apacheの実行ユーザ、そしてグループはリスト5のように調査できます。
+
+* リスト5: apacheの動作するユーザ、グループを調査
+
+.. code-block:: bash
+	:linenos:
+	
+	uedamac:~ ueda$ grep ^User /private/etc/apache2/httpd.conf
+	User _www
+	uedamac:~ ueda$ grep ^Group /private/etc/apache2/httpd.conf
+	Group _www
+
+リスト6のように ``hoge`` を置きましょう。
+
+* リスト6: ファイルを置いてapacheから操作できるように所有者変更
+
+.. code-block:: bash
+	:linenos:
+	
+	uedamac:cgi-bin ueda$ touch /tmp/hoge
+	uedamac:cgi-bin ueda$ sudo chown _www:_www /tmp/hoge 
+
+次に、リスト7のように ``rm`` コマンドを ``cgi-bin`` の下に置きます。
+拡張子は ``.cgi`` にしておきます。
+
+* リスト7: ``rm`` コマンドに拡張子をつけて ``cgi-bin`` に置く
+
+.. code-block:: bash
+	:linenos:
+	
+	uedamac:~ ueda$ cp /bin/rm ~/cgi-bin/rm.cgi
+
+では、この ``rm.cgi`` を、ブラウザで呼び出してみます。
+これは ``curl`` を使うと雰囲気が出ないので、ブラウザで。
+アドレスの欄には、
+``http://localhost/cgi-bin/rm.cgi?/tmp/hoge`` と書きます。
+
+　ブラウザに表示されるのは、残念ながら図1のような
+Internal Server Error です。
+
+* 図1: ``rm.cgi`` を実行した結果
+
+.. figure:: 201307/RM_CGI.PNG
+	:alt: 
+	:width: 30%
+
+しかし、 ``/tmp/hoge`` は、リスト8のように消えています。
+
+* リスト8: ``/tmp/hoge`` が消える
+
+.. code-block:: bash
+	:linenos:
+	
+	uedamac:cgi-bin ueda$ ls /tmp/hoge 
+	ls: /tmp/hoge: No such file or directory
+
+びっくりしましたでしょうか？
+
+　結局、何をやったかというと、
+ブラウザに ``http://localhost/cgi-bin/rm.cgi?/tmp/hoge``
+を指定することで、サーバ（この例では自分のMac）の
+``cgi-bin`` の下の ``rm.cgi`` のオプションに、
+``/tmp/hoge`` を渡して ``/tmp/hoge`` を消したということになります。
+``ssh`` でリモートのサーバに対し、
+
+.. code-block:: bash
+
+	$ ssh <ホスト> '~/cgi-bin/rm.cgi /tmp/hoge'
+
+とやることと何ら変わりがありません。
+違うのは、22番ポートでなく、80番ポートを使用したくらいです。
+
+　ただし、 ``rm`` コマンドをインターネット上から
+不特定多数の人にやられたらたまったものではないので、
+apacheでは、
+
+* UserやGroupで実行するユーザを限定
+* 実行できるプログラムを特定のディレクトリの下のものに制限
+* 拡張子を登録した物だけに制限
+
+するなど、一定の制約を設けてなるべく安全にしてあります。
+
+　逆に、 ``~/cgi-bin/`` の下に置いて実行可能なようにパーミッションを設定すれば、
+プログラムはなんでもCGIで起動できるようになります。
+``rm.cgi`` のようにC言語で書いてあっても、
+伝統的に perl で書いても動きます。
+
+　・・・ということは、シェルスクリプトでも動くということになります。
+
+CGIシェルスクリプトを書く
+==============================================================
+　では、シェルスクリプトでCGIスクリプトを書いてみましょう。
+まず、ブラウザに字を表示するための最小限のCGIスクリプトをリスト9に示します。
+
+* リスト9: 最小限のCGIスクリプト
+
+.. code-block:: bash
+	:linenos:
+
+	uedamac:cgi-bin ueda$ cat smallest.cgi 
+	#!/bin/bash -xv
+	
+	echo "Content-Type: text/html"
+	echo ""
+	echo 魚眼perlスクリプト
+	//書いたら実行できるようにしておきましょう。
+	uedamac:cgi-bin ueda$ chmod +x smallest.cgi 
+
+　このシェルスクリプトは何の変哲もないものなので、
+リスト10のように普通に端末から実行できます。
+
+* リスト10: 端末からCGIスクリプトを実行してみる
+
+.. code-block:: bash
+	:linenos:
+	
+	uedamac:cgi-bin ueda$ ./smallest.cgi 2> /dev/null
+	Content-Type: text/html
+	
+	魚眼perlスクリプト
+
+　何の変哲もないのですが、ブラウザから呼び出すと図2のように見えます。
+		
+* 図2: ブラウザから ``smallest.cgi`` を実行した結果
+
+.. figure:: ./201307/SMALLEST.PNG
+	:alt: 
+	:width: 50%
+
+　この例のポイントはいくつかあります。
+まず、 ``Content-Type-type: text/html`` ですが、
+これはHTTPプロトコルで定められたHTTPヘッダです。
+さきほどの ``rm.cgi`` でブラウザにエラーが出たのは、
+HTTPヘッダを ``rm.cgi`` が出さないからです。
+ブラウザとapacheはHTTPプロトコルでしゃべっているので、
+apache（が動かしているCGIプログラム）
+がHTTPヘッダを返さず、ブラウザが怒ったのでした。
+
+　ヘッダの次の ``echo ""`` は、
+ヘッダと中身を区切る空白行を出すためにあります。
+ヘッダの前には余計なものを出してはいけないので、
+例えばリスト11のようなCGIスクリプトをブラウザから呼び出すと、
+やはりブラウザにエラーが表示されます。
+
+* リスト11: HTTPヘッダの前に何か出力するとエラーになる
+
+.. code-block:: bash
+	:linenos:
+	
+	uedamac:cgi-bin ueda$ cat dame.cgi 
+	#!/bin/bash -xv
+	
+	echo huh?
+	echo "Content-Type: text/html"
+	echo ""
+	echo 湾岸pythonスクリプト
+	uedamac:cgi-bin ueda$ curl http://localhost/cgi-bin/dame.cgi 2> /dev/null | head -n 3
+	<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+	<html><head>
+	<title>500 Internal Server Error</title>
+
+　この例では ``Content-Type-type: text/html`` と、
+「テキストのHTML」を送ると言っておいて、
+実際には単なる一行のテキストしか送っていませんが、
+これは今のところこだわらないでおきましょう。
+
+　次に着目すべきは、シェルスクリプトはただ標準出力に字を出しているだけで、
+ブラウザやウェブサーバに何か特別なことをしているわけではないということです。
+これはapacheがシェルスクリプトの出力を受け取ってブラウザに投げるからです。
+シェルスクリプトの側ですべきことは、
+正確なHTTPヘッダの出力だけということになります。
+いかにもUNIXらしい動きです。
+
+　最後、シバン（ ``#!/bin/bash`` ）の行にログを出力する ``-vx``
+というオプションをつけましたが、このログはどこに行くのか。
+実はリスト12のように、apacheのエラーログに行きます。
+
+* リスト12: ``error_log`` にCGIスクリプトの標準エラー出力がたまる
+
+.. code-block:: bash
+	:linenos:
+	
+	uedamac:cgi-bin ueda$ cat /private/var/log/apache2/error_log
+	(略)
+	[Tue Apr 23 21:46:14 2013] [error] [client ::1] #!/bin/bash -xv
+	[Tue Apr 23 21:46:14 2013] [error] [client ::1] 
+	[Tue Apr 23 21:46:14 2013] [error] [client ::1] echo "Content-Type: text/html"
+	[Tue Apr 23 21:46:14 2013] [error] [client ::1] + echo 'Content-Type: text/html'
+	[Tue Apr 23 21:46:14 2013] [error] [client ::1] echo ""
+	[Tue Apr 23 21:46:14 2013] [error] [client ::1] + echo ''
+	[Tue Apr 23 21:46:14 2013] [error] [client ::1] echo \xe9\xad\x9a...(略)
+
+　今挙げたポイントは、別のLL言語でも全く同じ事です。
+違うのは、LL言語には便利なライブラリが存在していて、
+ウェブサーバとのダイレクトなやりとりがちょっとだけ隠蔽されていることです。
+でもまあ、何を使おうが普通のCGIの場合、
+最終的にはHTTPでHTMLやjavascriptを出力することになります。
+
+とりあえず何か作ってみましょう
+==============================================================
+　さて、シェルスクリプトでCGIスクリプトが作れると分かったので、
+さっそくなにか作ってみましょう。
+実用的なものは次回以降にまわすとして、
+何か面白い物を作ってみましょう。
+
+　まずは、端末からブラウザに文字等を送り込むものを作ってみます。
+リスト13のようなシェルスクリプトを作ります。
+
+* リスト13: ``notify.cgi``
+
+.. code-block:: bash
+	:linenos:
+		
+	uedamac:cgi-bin ueda$ cat notify.cgi 
+	#!/bin/bash
+	
+	mkfifo /tmp/pipe 
+	chmod a+w /tmp/pipe
+	
+	echo "Content-Type: text/html"
+	echo ""
+	cat /tmp/pipe
+	rm /tmp/pipe
+
+4行目の ``mkfifo`` というコマンドは、
+「名前つきパイプ」という特別なファイルを作るコマンドです。
+「名前つきパイプ」は、その名のとおりパイプでして、
+片方から字を突っ込むと、もう片方から字が出てきます。
+例えば、
+
+.. code-block:: bash
+	
+	$ echo hoge | cat 
+
+という処理を名前付きパイプで書くとリスト14のようになります。
+
+* リスト14: 名前付きパイプを使う
+
+.. code-block:: bash
+	:linenos:
+	
+	//端末1
+	$ cat /tmp/pipe
+	//端末2
+	$ echo hoge > /tmp/pipe
+
+こうすると、端末1の ``cat`` は ``/tmp/pipe`` 
+に何か字が流れてくるまで止まった状態になり、
+端末2で ``echo hoge`` が実行されたら ``hoge`` と出力します。
+``echo hoge`` が終わると、 ``cat`` も終わります。
+よくよく考えると、この動作は普通のパイプのものと同じです。
+ただし、 ``/tmp/pipe`` は ``rm`` で消さない限り、残ります。
+
+　五行目の ``chmod`` は、 ``/tmp/pipe``
+の所有者以外でも書き込めるようにするためのパーミッション変更です。
+
+　さて、 ``notify.cgi`` をブラウザから呼び出してみましょう。
+CGIスクリプトは ``cat /tmp/pipe`` で一旦止まるので、
+ブラウザでは待ちの状態になります。
+
+　次に、おもむろに端末からリスト15のように打ってみてください。
+（脚注: ``/tmp/pipe`` のないときにやってしまうと、
+``/tmp/pipe`` という普通のファイルができてしまうので注意してください。）
+
+* リスト15: 送り込む文字列
+
+.. code-block:: bash
+	:linenos:
+	
+	uedamac:~ ueda$ echo '<script>alert("no more XSS!!")</script>' > /tmp/pipe 
+
+図3のようにアラートが出たら成功です。
+何の役にも立たないですが、多分、面白いと思っていただけたかと。
+
+* 図3: ブラウザでアラートが表示される
+
+.. figure:: ./201307/ALERT.png
+	:alt: 
+	:width: 50%
+
+　ちなみに、HTTPヘッダがちゃんと意味があるということを示すために、
+``notify.cgi`` をリスト2のように書き換えてもう一度やってみます。
+
+* リスト16: ``notify2.cgi``
+
+.. code-block:: bash
+	:linenos:
+	
+	uedamac:cgi-bin ueda$ cat notify2.cgi 
+	#!/bin/bash
+	
+	mkfifo /tmp/pipe 
+	chmod a+w /tmp/pipe
+	
+	echo "Content-Type: text/plain"
+	echo ""
+	cat /tmp/pipe
+	rm /tmp/pipe
+
+今度は、ブラウザに
+「<script>alert("no more XSS")</script>』
+と文字列が表示されたと思います。
+まともなブラウザならば・・・。
+
+　HTTPヘッダの話が出たので、
+最後にファイルのダウンロードでもやってみましょう。
+例えばみんな大好きエクセルファイルのダウンロードを行うCGIスクリプトでは、
+リスト17のように書けます。
+
+* リスト17: ファイルをダウンロードさせるCGIスクリプト
+
+.. code-block:: bash
+	:linenos:
+
+	uedamac:cgi-bin ueda$ cat download_xlsx.cgi 
+	#!/bin/bash -xv
+	
+	FILE=/tmp/book1.xlsx
+	LENGTH=$(wc -c $FILE | awk '{print $1}')
+	
+	echo "Content-Type: application/octet-stream"
+	echo 'Content-Disposition: attachment; filename="hoge.xlsx"'
+	echo "Content-Length: $LENGTH"
+	echo 
+	cat $FILE
+
+7行目の ``application/octet-stream`` は、
+「バイナリを送り込むぞ」という宣言、
+8行目は「 ``hoge.xlsx`` という名前で保存してくれ」、
+9行目は変数 ``LENGTH`` に書いてあるサイズのデータを出力するぞ、
+という意味になります。
+
+　そして、実際にファイルをブラウザに向けて発射するのには、
+11行目のようにおなじみの ``cat`` を使います。
+``cat`` はテキストもバイナリも区別しません。
+区別してしまうと他のコマンドと連携して使えなくなってしまいます。
+
+　ファイルはありとあらゆるものがダウンロードさせることができますが、
+ヘッダについては微妙に変化させます。
+例えば、mpegファイルをブラウザに直接見せたいのなら図12のように書きます。
+
+* 図12: mpegファイルを見せるためのCGIスクリプト
+
+.. code-block:: bash
+	:linenos:
+	
+	uedamac:cgi-bin ueda$ cat download_movie.cgi 
+	#!/bin/bash
+	
+	FILE=/tmp/japanopen2006_keeper.mpeg
+	LENGTH=$(wc -c $FILE | awk '{print $1}')
+	
+	echo "Content-Type: video/mpeg"
+	echo "Content-Length: $LENGTH"
+	echo 
+	cat $FILE
+
+　私の普段使っているブラウザ（MacのGoogle ChromeとFirefox）では、
+図13のようにブラウザのプラグインが立ち上がり、
+画面内でムービーが再生されます。
+
+* 図13: ヘッダを適切に書くとブラウザでよしなに取りはからってくれる
+
+.. figure:: 201307/MOVIE.PNG
+	:alt: 
+	:width: 30%
+
+ヘッダに ``Content-Disposition: attachment; filename="hoge.mpeg"'``
+を加えると、ファイルを再生するかファイルに保存するか聞いて来たり、
+再生されずにファイルに保存されたりします。
+筆者のHTTPヘッダについての知識はこの程度ですが、
+もし別の言語でHTTPヘッダを間接的にいじったことのある人は、
+シェルスクリプトでも細かい制御ができることでしょう。
+
+おわりに
+==============================================================
+
+　今回はシェルスクリプトでCGIスクリプトを書きました。
+特に出力について扱いました。
+おそらく今回の内容で一番重要なのは、
+apacheを経由してブラウザにコンテンツを送るときには、
+標準出力を使うということでしょうか。
+ここらあたりにも、インターネットがUNIXと共に発展して来た名残があります。
+いや、名残というよりも必然かもしれません。
+標準入出力は、これ以上ないくらい抽象化されたインタフェースであり、
+まず最初に使用を検討すべきものでしょう。
+
+　次回はCGIスクリプトでのPOST、
+GETも絡めて何かを作ってみようと考えています。
