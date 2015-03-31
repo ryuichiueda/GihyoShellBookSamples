@@ -1,0 +1,554 @@
+==============================================================
+開眼シェルスクリプト 第20回 シェルスクリプトでCGIスクリプト2
+==============================================================
+
+　毎度おなじみ流浪の連載、開眼シェルスクリプトですが、
+前回からCGIスクリプトをbashで記述するというお題を扱っています。
+実はこの禁断の技は、かつては特別珍しいものではなかったようです。
+UNIXの古い方（脚注：言い方がよくないか。）
+に話をするとああ懐かしいという言葉が返ってきます。
+
+　しかし、懐かしいと言われて喜んでもいられません。
+別に古い事を懐古するために連載があるのではありません。
+bashでCGIスクリプトを書く技を身につけると、
+端末の操作の延長線上でCGIスクリプトを書けるのですから、
+実はなかなか便利です。
+この伝統芸能が消えないように、
+コソコソここに方法を書いておくことにします。
+
+　今回は、GETを使ってブラウザからCGIスクリプトに文字を送り込み、
+CGIスクリプト側でそれに応じて動的に表示を変えるというお題を扱います。
+
+ゲッツ！ ---ダンディー坂野
+
+環境等
+==============================================================
+
+　前回に引き続き、筆者の手元のMacでapacheを起動し、
+そこでCGIスクリプトを動かします。
+Macでのapacheの設定方法は前回を参照ください。
+Linux、BSD等の場合はウェブ等に説明をゆずります。
+
+　筆者のMacでは
+``/Library/WebServer/CGI-Executables/``
+にCGIスクリプトを置くと、
+``http://localhost/cgi-bin/hoge.cgi``
+などとURLを指定することでCGIスクリプトを起動できます。
+前回設定しましたが、
+``/Library/WebServer/CGI-Executables/``
+にいちいち移動するのは面倒なので、
+リスト1のように筆者のアカウントのホーム下に
+``cgi-bin`` という名前でシンボリックリンクを張って、
+そこにスクリプトを置くようにしました。
+
+* リスト1: ホームから簡単にアクセスできるようにする（前回からの再掲）
+
+.. code-block:: bash
+	:linenos:
+        
+	uedamac:~ ueda$ ln -s /Library/WebServer/CGI-Executables/ ./cgi-bin
+	uedamac:~ ueda$ cd cgi-bin
+	uedamac:cgi-bin ueda$ sudo chown ueda:wheel ./
+
+　今回もバージョンが気になるような特別なことはしませんが、
+念のためMacのソフトウェア環境をリスト2に示します。
+
+* リスト2: 環境
+
+.. code-block:: bash
+	:linenos:
+	
+	uedamac:~ ueda$ bash --version
+	GNU bash, version 3.2.48(1)-release (x86_64-apple-darwin12)
+	Copyright (C) 2007 Free Software Foundation, Inc.
+	uedamac:~ ueda$ uname -a
+	Darwin uedamac.local 12.3.0 Darwin Kernel Version 12.3.0: Sun Jan  6 22:37:10 PST 2013; root:xnu-2050.22.13~1/RELEASE_X86_64 x86_64
+	uedamac:SD_GENKOU ueda$ apachectl -v
+	Server version: Apache/2.2.22 (Unix)
+	Server built:   Dec  9 2012 18:57:18
+
+GETの方法
+==============================================================
+
+　まず最初に、一番簡単なGETから説明します。
+GET（GETメソッド）というのは、
+HTTPでCGIスクリプトに文字列を渡すための方法の一つです。
+ブラウザなどでURLを指定するときに、
+後ろに文字列をくっつけてCGIスクリプトにその文字列を送り込む方法です。
+
+　リスト3に、シェルスクリプトで実例を示します。
+
+* リスト3: GETで文字列を受け取り表示するCGIスクリプト
+
+.. code-block:: bash
+	:linenos:
+	
+	uedamac:cgi-bin ueda$ cat echo.cgi 
+	#!/bin/bash -xv
+	
+	echo "Content-type: text/html"
+	echo 
+	echo "$QUERY_STRING"
+
+これを ``~/cgi-bin/`` に置いて、
+ブラウザから次のように実行します。
+
+* 図1: GETで送った文字列を表示
+
+.. figure:: ./201308/GET.png
+	:alt: 
+	:width: 40%
+
+　これを解説すると、まず、ブラウザに打った文字列
+
+``http://localhost/cgi-bin/echo.cgi?gets!!``
+
+ですが、これは ``echo.cgi`` に ``gets!!``
+という文字列をGETで渡すという意味になります。
+
+　文字列を送りつけられたCGIスクリプトの方は、
+なんらかの方法でその文字列を受け取らなければなりません。
+が、案外簡単で、
+``QUERY_STRING`` という変数に入っているのでそれを使うだけです。
+ですから、リスト2のようにHTTPヘッダをつけてただ
+``echo`` するだけで、
+ブラウザにむけてGETで受け取った文字列を出力できます。
+
+　変数 ``QUERY_STRING`` を使うときは、
+よほど特殊な事情がない限り、
+6行目のようにダブルクォートで囲みます。
+囲まないと、次のようになってしまいます。
+
+* 図2: ``$QUERY_STRING`` のダブルクォートを除いて ``*`` を送り込む
+
+.. figure:: ./201308/WILD.png
+	:alt: 
+	:width: 40%
+
+これは、端末上でのルールと同じです。
+リスト4のように端末で実験すると理解できるはずです。
+
+* リスト4: 端末上でのクォート有無の実験
+
+.. code-block:: bash
+	:linenos:
+	
+	//「*」を変数Aにセット
+	uedamac:cgi-bin ueda$ A="*"
+	//クォートしない
+	uedamac:cgi-bin ueda$ echo $A
+	dame.cgi download_xlsx.cgi ...(略)
+	//クォート
+	uedamac:cgi-bin ueda$ echo "$A"
+	*
+
+シェルスクリプトでCGIスクリプトを書くときは、
+良くも悪くもシステムと密着していることを忘れてはいけません。
+
+　ただ、コマンドをインジェクションされるということに、
+あまりビビってもいけません。
+たとえ ``$QUERY_STRING`` のクォートが無くても、
+``echo`` の後ろの変数はただ文字列に変換されるだけで実行はされません。
+
+* 図3: セミコロンの後ろにコマンドをインジェクション
+
+.. figure:: ./201308/RM.png
+	:alt: 
+	:width: 40%
+
+　逆にまずいパターンをリスト5に挙げておきます。
+まずいというより、問題外ですが・・・。
+この例のように、
+クォートしたからと言って安全というわけではありません。
+
+* リスト5: GETで受けた文字列を実行してしまうパターン
+
+.. code-block:: bash
+	:linenos:
+	
+	//その1:変数が行頭に来ている
+	uedamac:cgi-bin ueda$ cat yabai1.cgi 
+	#!/bin/bash -xv
+	
+	echo "Content-type: text/html"
+	echo 
+	"$QUERY_STRING"
+
+	//コマンドが実行できる
+	uedamac:~ ueda$ curl http://localhost/cgi-bin/yabai1.cgi?ls
+	dame.cgi
+	download_xlsx.cgi
+	echo.cgi
+	...
+
+	//evalを使う
+	uedamac:cgi-bin ueda$ cat yabai2.cgi 
+	#!/bin/bash -xv
+	
+	echo "Content-type: text/html"
+	echo 
+	eval "$QUERY_STRING"
+	//コマンドが実行できる
+	uedamac:cgi-bin ueda$ curl http://localhost/cgi-bin/yabai2.cgi?ls
+	dame.cgi
+	download_xlsx.cgi
+	echo.cgi
+	...
+
+他にもいろいろまずい書き方はありますが、
+今回の内容はこれくらい知っておいて予防しておけば大丈夫です。
+もちろん閉じた環境で実験するには何も気にする必要はありません。
+筆者は、セキュリティーレベルはウェブサイトの
+用途次第で変えるべきだという立場ですので、
+これくらいにして次に行きます。
+
+コマンドを選んで結果を表示
+==============================================================
+
+　では、ここからはGETを使って作り物をしてみましょう。
+ここで作るのはサーバ監理用のウェブページです。
+ページからコマンドを呼び出すことができるCGIスクリプトを作ります。
+以前も（第4回、第5回）、
+HTMLを出力するシェルスクリプトを作ったことはありました。
+しかし、今回はHTMLを作り置きするのではなく、
+CGIシェルスクリプトに動的にHTMLを生成させる点が違います。
+
+　まず、リスト6のhtmlファイルを作ります。
+これをCGIスクリプトで読み込み、
+``sed`` 等で加工することで動的にHTMLを出力します。
+
+* リスト6: ``com.html``
+
+.. code-block:: bash
+	:linenos:
+		
+	uedamac:cgi-bin ueda$ cat com.html 
+	<!DOCTYPE html>
+	<html>
+	    <head>
+	        <meta charset="UTF-8" />
+	        <title>オレオレマシーン情報</title>
+	    </head>
+	    <body>
+	        <form name="FORM" method="GET" action="./com.cgi">
+	            コマンド：
+	            <select name="COM">
+	                <option value="0">cat /etc/hosts</option>
+	                <option value="1">top -l 1</option>
+	            </select>
+	            <input type="submit" value="ポチ" />
+	        </form>
+	        <pre>
+	<!--RESULT-->
+	        </pre>
+	    </body>
+	</html>
+
+次にリスト7のCGIスクリプトを用意し、
+このhtmlファイルを表示します。
+デバッグ用に、
+後ろの方で ``echo "$QUERY_STRING"`` しておきます。
+htmlが終わった後の出力になるので邪道ですが、
+ブラウザには表示されます。
+
+* リスト7: ``com.cgi``
+
+.. code-block:: bash
+	:linenos:
+	
+	uedamac:cgi-bin ueda$ cat com.cgi 
+	#!/bin/bash -xv
+	
+	htmlfile=/Users/ueda/cgi-bin/com.html
+	
+	###表示
+	echo "Content-type: text/html"
+	echo 
+	cat $htmlfile
+	
+	#デバッグ用
+	echo "$QUERY_STRING"
+
+これでブラウザから ``com.cgi`` を呼び出し、
+セレクトボックスから項目を選び、
+ボタンを押してみてください。
+図4のように左下にGETで送った文字列が表示されるはずです。
+
+* 図4: フォームで送信される文字列
+
+.. figure:: ./201308/COM.png
+	:alt: 
+	:width: 40%
+
+リストをHTMLにはめ込む
+==============================================================
+
+　さて、図4の ``COM=1`` ですが、
+``COM`` というのは、セレクトボックスについた名前
+（ ``com.html`` の ``name="COM"`` の部分）、
+``=`` より右側は、選んだ項目の ``value`` の値です。
+valueの値から、ブラウザでどの項目が選ばれたか分かるので、
+セレクトボックスに書かれたコマンドをそのまま実行すればよいということになります。
+番号とコマンドの対応表のファイルをどこかに置いておけばよいでしょう。
+また、今のところ、 ``com.html`` に直接コマンドを書いていますが、
+対応表のファイルの内容を動的に反映させた方がよいでしょう。
+
+　このとき、open usp Tukubaiの ``mojihame`` というコマンドを使います。
+まず、 ``com.html`` を次のように書き換えます。
+
+* リスト7: ``mojihame`` に対応した ``com.html``
+
+.. code-block:: bash
+	:linenos:
+	
+	<select name="COM">
+	<!--COMLIST-->
+		<option value="%1">%2</option>
+	<!--COMLIST-->
+	</select>
+
+次に、 ``com.cgi`` をリスト8のように書き換えます。
+これで、ブラウザには ``$tmp-list`` に書かれたコマンドが
+番号（行番号）をつけられてセレクトボックスにセットされます。
+コマンドのリストは外部のファイルでもよいのですが、
+説明のためにヒアドキュメントで作っています。
+
+　先にリスト8について、本題と関係ない細かい部分を説明しておくと、
+リスト2行目の ``-vx`` はシェルスクリプトの実行ログの
+出力を行うためのオプションです。
+4行目の ``exec 2>`` は、このスクリプトのエラー出力を
+ファイルにリダイレクトするためのコマンドです。
+11行目から14行目のヒアドキュメントは、
+``FIN`` と ``FIN`` の間に書いたものを
+標準出力に出力するという動きをします。
+``FIN`` は、始めと終わりで対になっていれば、
+別に ``EOF`` とか ``HOGE`` とかでも動きます。
+
+* リスト8: コマンドのリストを ``com.html`` にはめ込むための ``com.cgi``
+
+.. code-block:: bash
+	:linenos:
+	
+	uedamac:cgi-bin ueda$ cat com.cgi 
+	#!/bin/bash -xv
+
+	exec 2> /tmp/log
+	
+	PATH=/usr/local/bin:$PATH
+	
+	htmlfile=/Users/ueda/cgi-bin/com.html
+	tmp=/tmp/$$
+	
+	cat << FIN > $tmp-list
+	cat /etc/hosts
+	top -l 1
+	echo test_test _
+	FIN
+	
+	###表示
+	echo "Content-type: text/html"
+	echo 
+	sed 's/_/\\_/g' $tmp-list	|
+	tr ' ' '_'			|
+	awk '{print NR,$1}'		|
+	mojihame -lCOMLIST $htmlfile -
+
+	#デバッグ用
+	echo "$QUERY_STRING"
+	
+	rm -f $tmp-*
+	exit 0
+
+　 ``mojihame`` の部分だけ抜き出すと、まず、
+22行目の ``awk`` の後のパイプにはリスト9のようなデータが流れます。
+行番号 がついて、スペースは ``_`` 、 ``_`` は ``\_``
+にエスケープされます。
+open usp Tukubaiのコマンドは空白区切りのデータを受け付けるので、
+それに合わせてデータを変換してやらなくてはいけません。
+
+* リスト9: エスケープ後のコマンドのリスト
+
+.. code-block:: bash
+	:linenos:
+	
+	1 cat_/etc/hosts
+	2 top_-l_1
+	3 echo_test\_test_\_
+
+これで2列のデータになります。
+これを ``mojihame`` に入力すると、
+``COMLIST`` で挟まれた部分がレコードの数だけ複製され、
+1列目がリスト@@@の ``%1`` 、
+2列目がリスト@@@の ``%2`` 、にはめ込まれます。
+エスケープされた文字は戻ります。
+``mojihame`` が出力するHTMLのうち、
+セレクトボックスの部分をリスト10に示します。
+
+* リスト10: ``com.cgi`` が出力するHTMLの一部
+
+.. code-block:: bash
+	:linenos:
+	
+	<select name="COM">
+		<option value="1">cat /etc/hosts</option>
+		<option value="2">top -l 1</option>
+		<option value="3">echo test_test _</option>
+	</select>
+
+``mojihame`` は慣れると便利です。
+が、頑張る人は ``awk`` でもHTMLの部品は作れます。
+
+再度、インジェクションに注意
+==============================================================
+
+　ここでもう一回注意があります。
+``com.cgi`` はセレクトボックスから数字を受け取りますが、
+数字だけしか受け取れないわけではありません。
+リスト11のように ``curl`` 等を使っても、
+ブラウザでURLの後ろを細工しても邪悪な文字列を送る事ができます。
+
+* リスト11: ``com.cgi`` に直接GETでデータを渡す
+
+.. code-block:: bash
+	:linenos:
+	
+	uedamac:~ ueda$ curl "http://localhost/cgi-bin/com.cgi?reboot" 
+	（略）
+	</html>
+	reboot
+
+この対策もなかなか面倒なのですが、
+今回の例だと単に数字しか受け付けなければよいので、
+``tr`` を使って次のようにGETされた文字列を受け取ります。
+``tmp=/tmp/$$`` の行の下あたりに、
+
+.. code-block:: bash
+
+	NUM=$(echo "$QUERY_STRING" | tr -dc '0-9')
+
+と付け足します。 ``tr`` のオプション ``-d``
+は文字（この例では0から9までの数字）を消すという意味ですが、
+``-c`` をつけると意味が反転します。
+ですので、リスト12のような挙動を示します。
+UTF-8なら日本語が混ざっても問題ありません。
+
+* リスト12: ``tr`` で、指定の文字「以外」を削除
+
+.. code-block:: bash
+	:linenos:
+	
+	uedamac:~ ueda$ echo 'COM=1aewagああ2' | tr -dc '0-9'
+	12uedamac:~ ueda$
+	//↑ 1と2だけ残る
+
+このように12だけ残ります。改行すら消えます。
+これで行番号が変数 ``NUM`` に入るので、
+あとはリストのコマンドを実行するだけです。
+
+完成
+==============================================================
+　完成した ``com.cgi`` をリスト13に示します。
+変数に文字列が入っていなかったり、
+中間ファイルができなかったりというところでバグが出るので、
+多少慣れが必要です。
+例えば、 ``COM`` にコマンドが入らないと23行目でエラーが出るので、
+21行目で ``COM`` に ``:`` （なにもしないコマンド）を入れるなど、
+細かい芸が必要です。しかし、行数は短くなりますので、
+*\ 慣れると* さっさと何か試作したり、
+USP友の会のサイト（http://www.usptomo.com）
+のように見栄えのよいものも早く作れるようになります。
+
+* リスト13: ``com.cgi`` 完成品
+
+.. code-block:: bash
+	:linenos:
+
+	#!/bin/bash -xv
+	exec 2> /tmp/log
+	
+	PATH=/usr/local/bin:$PATH
+	htmlfile=/Users/ueda/cgi-bin/com.html
+	tmp=/tmp/$$
+	
+	######実行可能コマンドリスト######
+	cat << FIN > $tmp-list
+	cat /etc/hosts
+	top -l 1
+	echo test_test _
+	FIN
+	
+	######コマンドの実行######
+	#番号受け取り
+	NUM=$(echo "$QUERY_STRING" | tr -dc '0-9')
+	#指定された行を取得
+	COM=$(awk -v n="$NUM" 'NR==n' $tmp-list)
+	#COMが空なら : を入れておく
+	[ -z "$COM" ] && COM=":"
+	#実行
+	$COM > $tmp-result
+	
+	######HTML出力######
+	echo "Content-type: text/html"
+	echo 
+	#エスケープ処理
+	sed 's/_/\\_/g' $tmp-list       |   
+	tr ' ' '_'                      |
+	#行番号をつける
+	awk '{print NR,$1}'             |
+	#出力 >>> 1:行番号 2:コマンド
+	mojihame -lCOMLIST $htmlfile -  |
+	#コマンド実行結果をはめ込み
+	filehame -lRESULT - $tmp-result
+	
+	rm -f $tmp-*
+	exit 0
+
+　完成品では、もう一つ ``filehame`` というコマンドを使いました。
+これは、あるファイルの間に別のファイルの中身を差し込むコマンドで、
+次のように使います。
+
+* リスト14: ``filehame`` の使い方
+
+.. code-block:: bash
+	:linenos:
+	
+	uedamac:cgi-bin ueda$ cat file1 
+	===参加者===
+	ATT
+	===以上===
+	uedamac:cgi-bin ueda$ cat meibo 
+	山田
+	里中
+	殿間
+	uedamac:cgi-bin ueda$ filehame -lATT file1 meibo
+	===参加者===
+	山田
+	里中
+	殿間
+	===以上===
+
+これも頑張って ``sed`` を使えば同様の処理はできます。
+
+　最後に実行結果を図5に示します。
+
+* 図5: 実行結果
+
+.. figure:: ./201308/RESULT.png
+	:alt: 
+	:width: 40%
+
+　ボタンを押すとセレクトボックスの選択結果が戻ってしまいますが、
+これもコマンドで対応できます。
+open usp Tukubaiの ``formhame`` というコマンドを使いますが、
+その説明は、チャンスがあれば次回以降ということで。
+
+おわりに
+==============================================================
+
+　今回はGETを使ってCGIスクリプトに字を送り込む方法を説明し、
+ブラウザからコマンドを実行するアプリケーションを作りました。
+``com.html`` と ``com.cgi`` を合わせても60行程度ですので、
+いつも端末を叩いたりシェルスクリプトを書いたりしている人が覚えておくと、
+特に何か試作するときに威力を発揮することでしょう。
+
+

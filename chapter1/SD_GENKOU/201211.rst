@@ -1,0 +1,572 @@
+========================================================================
+開眼シェルスクリプト 第11回 オンラインストレージもどきを作る（２）
+========================================================================
+
+はじめに
+========================================================================
+
+　今回は豆腐ボックス第二回です。
+前回はrsyncを使ったオンラインストレージ
+（たまっていく一方なのでモドキ）を作りました。
+今回はこれを少しずつ改善していきます。
+普段あまり使わない機能のオンパレードなので、
+筆者も詳しくはないのですが、
+一緒に一つずつ確認していきましょう。
+
+　今回は、前回にも増して力技の嵐です。
+また、私は変数にクォートをつけるどうのこうのには無頓着なので、
+（脚注：必要な局面では頓着します。）
+人によっては「こんなコーディングおかしい」と思うかもしれません。
+しかし、秀吉の「墨俣一夜城」の例はちょっと言い過ぎかもしれませんが、
+人の想像を超えた早さで何かを作れるということには、
+組織や自身の行く末を変えるくらいの力があります。
+
+
+おさらい
+========================================================================
+
+　豆腐ボックスは、サーバを経由して複数のクライアントPCのファイルを
+同期するアプリケーションです。
+各PCの ``~/TOFUBOX/`` 内のディレクトリをrsyncで同期します。
+クライアントPCは多数台の接続を想定しており、
+一つの同時に二台以上のクライアントとサーバが同期処理しないように、
+排他制御の仕組みが入っています。
+
+　排他制御は、クライアント側からサーバ側にディレクトリを作りにいき、
+その成否を利用して行っています。
+``mkdir`` を排他区間の作成に使うという手法です（前回参照）。
+
+　クライアント側は以下の二つのスクリプトで構成されています。
+``TOFUBOX.SYNC`` が同期を行うスクリプトです。
+また、 ``TOFUBOX.SUSSTOP`` は、PCがスリープから復帰したら、
+``TOFUBOX.SYNC`` を殺すスクリプトです。
+排他制御のために必要なスクリプトです。
+
+.. code-block:: bash
+        :linenos:
+
+	ueda@X201:~$ tree .tofubox/
+	.tofubox/
+	├── TOFUBOX.SUSSTOP
+	└── TOFUBOX.SYNC
+
+
+　サーバ側には、以下のようにシェルスクリプトが一つだけあります。
+
+.. code-block:: bash
+        :linenos:
+
+        ueda@tofu:~$ tree .tofubox/
+        .tofubox/
+        └── REMOVE.LOCK
+
+　 ``REMOVE.LOCK`` は、
+クライアント側がロックをかけた後に通信を中断したかどうかを判断し、
+適切な時にロックを外します。
+
+　豆腐ボックスのコードの総量は、クライアント側、
+サーバ側のものを全部足してもわずか73行です。
+せっかくコードが短いんですから、一番長い
+``TOFUBOX.SYNC`` をリスト1に全部掲載しておきます。
+このコードには、後から手を入れます。
+
+・リスト1: TOFUBOX.SYNC（前回のもの）
+
+.. code-block:: bash
+        :linenos:
+
+	ueda@X201:~/.tofubox$ cat TOFUBOX.SYNC 
+	#!/bin/bash -xv
+	#
+	# TOFUBOX.SYNC
+	#
+	# written by R. Ueda (usp-lab.com)
+	exec 2> /tmp/$(basename $0)
+	
+	server=tofu.usptomonokai.jp
+	dir=/home/ueda
+	
+	MESSAGE () {
+	        DISPLAY=:0 notify-send "豆腐: $1" 
+	}
+	
+	ERROR_CHECK(){
+	        [ "$(echo ${PIPESTATUS[@]} | tr -d ' 0')" = "" ] && return
+	        DISPLAY=:0 notify-send "豆腐: $1"
+	        exit 1
+	}
+	
+	#ロックがとれなかったらすぐ終了
+	ssh -o ConnectTimeout=5 $server "mkdir $dir/.tofubox/LOCK" || exit 0
+	
+	#pull############################
+	MESSAGE "受信開始"
+	rsync -auz --timeout=30 $server:$dir/TOFUBOX/ $dir/TOFUBOX/
+	ERROR_CHECK "受信中断"
+	MESSAGE "受信完了"
+	
+	#push############################
+	MESSAGE "送信開始"
+	rsync -auz --timeout=30 $dir/TOFUBOX/ $server:$dir/TOFUBOX/
+	ERROR_CHECK "送信中断"
+	MESSAGE "送信完了"
+	
+	ssh -o ConnectTimeout=5 $server "rmdir $dir/.tofubox/LOCK"
+	
+	exit 0
+
+
+serviceコマンドで止めたり動かしたりする
+========================================================================
+　まずやりたいのは、
+豆腐ボックスを簡単に止めたり動かしたりする機能を作ることです。
+例えばapacheなどは以下のようにスマートに止めたり動かしたりできるわけで、
+豆腐ボックスもこれくらいスマートにしたいものです。
+
+.. code-block:: bash
+        :linenos:
+
+        # service apache start
+        # service apache stop
+
+　現時点では、
+豆腐ボックスの起動には次のようにcrontabを使っています。
+しかしこれだと止めるにはわざわざ ``crontab -e``
+などでコメントアウトしに行かなくてはなりません。
+下手すると ``crontab -r`` などと打ってえらいことになります。
+
+.. code-block:: bash
+        :linenos:
+
+        ueda@X201:~/.tofubox$ crontab -l | grep -v "#"
+
+        */4 * * * * /home/ueda/.tofubox/TOFUBOX.SYNC
+
+.. /*
+
+　また、 ``TOFUBOX.SUSSTOP`` も、
+現状では単に端末からバックグラウンド起動しているだけです。
+止めるときはkillしてやらなければなりません。
+
+　ということで、 ``service`` から豆腐ボックスを制御できるようにしましょう。
+ここらへんはOSやディストリビューションによっていろいろ違いますが、
+ここでは ``Ubuntu Linux 12.04`` に絞っています。
+
+
+起動スクリプトを書く
+------------------------------------------------------------------------
+
+　まず、豆腐ボックスに関わるシェルスクリプトを一斉に起動したり、
+止めたりするスクリプトをリスト2のように書きます。
+スクリプト中の ``TOFUBOX.LOOP`` と ``TOFUBOX.WATCH`` は、
+まだ書いてないスクリプトです。
+特に凝ったことはしていません。
+startが引数にあったらシェルスクリプトを立ち上げて、
+stopがあったら全部殺すだけです。
+
+・リスト2: TOFUBOX.INIT
+
+.. code-block:: bash
+        :linenos:
+
+	ueda@X201:~/.tofubox$ cat TOFUBOX.INIT 
+	#!/bin/bash
+	#
+	# TOFUBOX.INIT 豆腐ボックスの起動・終了
+	#
+	# written by R. Ueda (r-ueda@usp-lab.com)
+	exec 2> /dev/null
+	 
+	sys=/home/ueda/.tofubox
+	 
+	case "$1" in
+	start)
+	        ps cax | grep -q TOFUBOX.SUSSTOP && exit 1
+	        ps cax | grep -q TOFUBOX.LOOP && exit 1
+	        ps cax | grep -q TOFUBOX.WATCH && exit 1
+	
+	        $sys/TOFUBOX.SUSSTOP &
+	        $sys/TOFUBOX.LOOP &
+	        $sys/TOFUBOX.WATCH &
+	;;
+	stop)
+	        killall TOFUBOX.SUSSTOP
+	        killall TOFUBOX.LOOP
+	        killall TOFUBOX.WATCH
+	;;
+	*)
+	        echo "Usage: TOFUBOX {start|stop}" >&2
+	        exit 1
+	;;
+	esac
+	 
+	exit 0
+	
+.. /*
+
+``TOFUBOX.LOOP`` をリスト3に示します。
+単に3分ごとに ``TOFUBOX.SYNC`` を立ち上げるだけの、
+crontabの代わりのスクリプトです。
+
+・リスト3: TOFUBOX.LOOP
+
+.. code-block:: bash
+        :linenos:
+
+	ueda@X201:~/.tofubox$ cat TOFUBOX.LOOP 
+	#!/bin/bash -xv
+	
+	while : ; do
+	        /home/ueda/.tofubox/TOFUBOX.SYNC
+	        sleep 60
+	done
+
+
+　 ``TOFUBOX.INIT`` を動かしてみましょう。
+``TOFUBOX.WATCH`` については、
+なにもしないスクリプトを置いて、実行できるようにしておきます。
+リスト4に動作例を示します。
+
+・リスト4：TOFUBOX.INITの動作確認
+
+.. code-block:: bash
+        :linenos:
+
+        #起動
+	ueda@X201:~/.tofubox$ ./TOFUBOX.INIT start
+        #プロセスを確認。
+	ueda@X201:~/.tofubox$ ps cax | grep TOFU
+	26072 pts/5    S      0:00 TOFUBOX.SUSSTOP
+	26073 pts/5    S      0:00 TOFUBOX.LOOP
+	26075 pts/5    S      0:00 TOFUBOX.SYNC
+        #二回目のstartは失敗する。
+	ueda@X201:~/.tofubox$ ./TOFUBOX.INIT start
+	ueda@X201:~/.tofubox$ echo $?
+	1
+        #止める。
+        ueda@X201:~/.tofubox$ ./TOFUBOX.INIT stop
+        ueda@X201:~/.tofubox$ ps cax | grep TOFU
+
+　次に、これを ``service`` で叩けるようにします。
+リスト5のように ``/etc/init.d/`` 下にリンクを貼ることでできるようになります。
+
+・リスト5： ``/etc/init.d`` にリンクを張る
+
+.. code-block:: bash
+        :linenos:
+
+	root@X201:/etc/init.d# ln -s ~/.tofubox/TOFUBOX.INIT tofubox
+	root@X201:/etc/init.d# ls -l tofubox 
+	lrwxrwxrwx 1 root root 32  8月 17 10:08 tofubox -> /home/ueda/.tofubox/TOFUBOX.INIT
+	
+　使ってみましょう。ユーザはrootでなくても大丈夫です。
+動作確認した例をリスト6に示します。
+
+・リスト6： ``service`` を使う
+
+.. code-block:: bash
+        :linenos:
+
+	ueda@X201:~$ service tofubox start
+	ueda@X201:~$ ps cax | grep TOFU
+	26433 pts/3    S      0:00 TOFUBOX.SUSSTOP
+	26434 pts/3    S      0:00 TOFUBOX.LOOP
+	26435 pts/3    S      0:00 TOFUBOX.SYNC
+	ueda@X201:~$ service tofubox start
+	ueda@X201:~$ echo $?
+	1
+	ueda@X201:~$ service tofubox stop
+	ueda@X201:~$ ps cax | grep TOFU
+
+　ところで、例えばUbuntuなどdebian系のディストリビューションでは
+``/etc/init.d/skeleton`` をコピーして起動スクリプトを書くなど、
+ディストリビューション、OSによっていろいろ流儀があるようです。
+が、個人で使うものを作るうちは、
+なにかまずい情報をインターネットにばらまく恐れがない限り、
+とにかく拙速にやることをおすすめします。
+「許可を取るより謝る方がずっと簡単だ。」
+です。考えすぎはいけません。
+また、私のようにいちいち変数のクォートをしない人は、
+バックアップを欠かさずに・・・。
+
+PCが起動したときに走らせる
+------------------------------------------------------------------------
+　次に、PCが起動したときに、
+``TOFUBOX.INIT`` も起動するようにします。
+まあ、あまり難しく考えず、 ``/etc/rc.local``
+ファイルに ``TOFUBOX.INIT`` を仕掛けることにします。
+ただ単に書くだけだと ``root`` で起動するので、
+``ueda`` で起動させるために ``su`` コマンドを使います。
+rootで起動すると、例えばsshのための鍵を ``ueda``
+の鍵でなくてrootのものを読みに行ってしまうなど、
+うまく動きません。リスト7のように記述します。
+
+・リスト7： ``/etc/rc.local`` への追記
+
+.. code-block:: bash
+        :linenos:
+
+	ueda@X201:~$ cat /etc/rc.local 
+	#!/bin/sh -e
+	#
+	# rc.local
+	#
+	（略）
+	
+        su - ueda -c '/home/ueda/.tofubox/TOFUBOX.INIT start'
+	
+	exit 0
+
+　これで、再起動のときにこのスクリプト（ ``rc.local`` ）が実行され、
+その中に書いてある ``TOFUBOX.INIT`` が実行されます。
+下のように、 ``ps`` に ``u`` オプションをつけて、
+スクリプトが指定のユーザで実行されていたら成功です。
+
+・リスト8：再起動時の動作確認
+
+.. code-block:: bash
+        :linenos:
+
+        ueda@X201:~# reboot
+        ...再起動...
+	ueda@X201:~$ ps caxu | grep TOFU
+	ueda      1364  0.0  0.0  17472  1460 ?        S    10:46   0:00 TOFUBOX.SUSSTOP
+	ueda      1366  0.0  0.0   4392   608 ?        S    10:46   0:00 TOFUBOX.LOOP
+
+もっとタイミングにこだわる
+========================================================================
+　さて、今度は同期のタイミングをもっと合理的にします。
+とにかく現状では3分ごとに読み書きしており、
+右上に「豆腐：～～～」とメッセージが出て非常に煩わしい。
+自分で作ってて煩わしいのですから、他人にはもっと煩わしいことでしょう。
+（脚注：ここ数ヶ月、画面をのぞきこんだ人に「豆腐って何ですか？」と聞かれます。
+「Software Design読め」と答えています。）
+
+ファイルを更新したときだけ同期しにいく
+------------------------------------------------------------------------
+　クライアントからサーバへの同期は、クライアントの
+``~/TOFUBOX`` ディレクトリが変更されたときだけでよいので、
+変更されたタイミングでサーバへ同期しにいくのがよいでしょう。
+``inotifywait`` というコマンドを使うと、ファイルの変更等の検知ができます。
+
+　例えば、 ``~/TOFUBOX/`` 下のディレクトリを監視するにはリスト9のように打ちます。
+
+・リスト9： ``inotifywait`` の立ち上げ
+
+.. code-block:: bash
+        :linenos:
+
+	ueda@X201:~$ inotifywait -mr ~/TOFUBOX/
+	Setting up watches.  Beware: since -r was given, this may take a while!
+	Watches established.
+
+立ち上がりっぱなしになるので、
+別の端末で ``~/TOFUBOX/`` の中をリスト10のように操作すると、
+
+・リスト10： ``~/TOFUBOX/`` にちょっかいを出す。
+
+.. code-block:: bash
+        :linenos:
+
+	ueda@X201:~/TOFUBOX$ touch hoge
+	ueda@X201:~/TOFUBOX$ rm hoge
+	ueda@X201:~/TOFUBOX$ cat ~/TESTDATA | head -n 1000 > hoge
+	
+``inotifywait`` を立ち上げた画面には、
+ファイル操作のログのようなものが出てきます。
+
+・リスト11： ``inotifywait`` の出力
+
+.. code-block:: bash
+        :linenos:
+
+	/home/ueda/TOFUBOX/ OPEN hoge
+	/home/ueda/TOFUBOX/ ATTRIB hoge
+	/home/ueda/TOFUBOX/ CLOSE_WRITE,CLOSE hoge
+	/home/ueda/TOFUBOX/ DELETE hoge
+	/home/ueda/TOFUBOX/ CLOSE_WRITE,CLOSE hoge
+	/home/ueda/TOFUBOX/ MODIFY hoge
+	/home/ueda/TOFUBOX/ OPEN hoge
+	/home/ueda/TOFUBOX/ MODIFY hoge
+	...
+	/home/ueda/TOFUBOX/ MODIFY hoge
+	/home/ueda/TOFUBOX/ MODIFY hoge
+	/home/ueda/TOFUBOX/ CLOSE_WRITE,CLOSE hoge
+
+　ということは、これを立ち上げておいて、
+ファイルに変更があったときだけ、
+クライアントからサーバへの同期を行えばよいということになります。
+また、 ``inotifywait``
+はリスト11のようにファイルに関する様々なイベントに反応しますが、
+``-e`` というオプションで
+同期するファイルができるときのイベントだけ引っ掛けることもできます。
+（リスト12内で使用しています。）
+
+　さっき作った空のスクリプト ``TOFUBOX.WATCH`` には、
+この役目をさせるつもりでした。
+リスト12のように ``TOFUBOX.WATCH`` を実装します。
+
+・リスト12： ``TOFUBOX.WATCH``
+
+.. code-block:: bash
+        :linenos:
+
+	ueda@X201:~/.tofubox$ cat TOFUBOX.WATCH 
+	#!/bin/bash
+	
+	dir=/home/usp/TOFUBOX
+	sys=/home/usp/.tofubox
+	
+	touch $sys/PUSH.REQUEST
+	
+        inotifywait -e moved_to -e close_write -mr $dir |
+        while read str ; do
+                [ -e $sys/PUSH.REQUEST ] && touch $sys/PUSH.WAIT
+                touch $sys/PUSH.REQUEST
+        done
+
+``TOFUBOX.WATCH`` は、
+
+* ファイルが ``~/TOFUBOX/`` に移動してきた
+* ``~/TOFUBOX/`` 内でなにかファイルの書き込みが終わってファイルが閉じられた
+
+の二つの事象を監視し、これらが起こったら、
+``~/.tofubox/`` の下に ``PUSH.REQUEST``
+と ``PUSH.WAIT`` いうファイルを置きます。
+``PUSH.WAIT`` は、 ``PUSH.REQUEST`` がすでにあるときに置きます。
+
+　そして、 ``TOFUBOX.SYNC`` 内の、
+クライアントのディレクトリをサーバに同期しにいく部分
+（リスト1の31～35行目）
+を次のように書き換えます。
+
+・リスト13：クライアント->サーバ同期のコード変更
+
+.. code-block:: bash
+        :linenos:
+
+	#push############################
+	while [ -e "$sys/PUSH.REQUEST" ] ; do
+	        MESSAGE "送信開始"
+	
+	        rsync -auz --timeout=30 $dir/TOFUBOX/ $server:$dir/TOFUBOX/
+	        ERROR_CHECK "送信中断"
+	
+	        rm $sys/PUSH.REQUEST
+	        [ -e $sys/PUSH.WAIT ] && mv $sys/PUSH.WAIT $sys/PUSH.REQUEST
+	
+	        MESSAGE "送信完了"
+	done
+	
+　rsync がうまくいったら、 ``PUSH.REQUEST`` を消します。
+この間に ``inotifywait`` が反応していたら、
+``PUSH.WAIT`` ができているのでこれを
+``PUSH.REQUEST`` に名前を変えてもう一回 ``rsync`` します。
+通信が途切れなければという条件はつきますが、
+クライアント側でファイルを書き換えている時はずっとロックを持ったままで
+``rsync`` が続きます。
+
+　この実装には一つ問題があって、これだとサーバ側にデータ変更があり、
+クライアント側の ``~/TOFUBOX/`` に変更があったら
+``PUSH.REQUEST`` ができるので、
+一度無駄な書き込みが起こります。これはご愛嬌ということで。
+
+本当に受信したときだけ通知する
+------------------------------------------------------------------------
+　読み込みの方は定期的に rsync をかけておいてもよいのですが、
+rsync が実際にファイルを読み込んでいないのに通知が出るのはかっこ悪い。
+実際に読み込んだら通知を出さないと、有用な情報になりません。
+余談ですが、弊社ではこういう通知を出すことは厳重な作法違反とされています。
+これもなんとかしましょう。
+
+　今度は、 ``inotifywait`` とは別のアプローチをとってみましょう。
+（実は書き込みでも同じ方法が使えますが。）
+ややこしいので、先にコードを見せます。
+リスト1の23行目、ロックを取りに行った後のコードにリスト14のコードを加えます。
+
+・リスト14：サーバ->クライアント同期のコード変更
+
+.. code-block:: bash
+        :linenos:
+
+	#同期の必要がなければすぐ終了
+	NUM=$(rsync -auzin --timeout=30 $s $c | wc -c)
+	#通信に失敗した、あるいは同期済みなら終了
+	if [ "$NUM" = "" -o "$NUM" -eq 0 ] ; then
+	        ssh -o ConnectTimeout=5 $server "rmdir $sys/LOCK"
+	        exit 0
+	fi
+
+　何をやっているのかというと、二行目で ``rsync`` を空実行して同期の必要を探り、
+同期の必要があれば、そのまま下に書いてある読み込み処理（と書き込み処理）を実行します。
+必要がなければif文内の処理でロックを返上します。
+
+　二行目の ``rsync`` には、 ``i`` と ``n`` というオプションがついています。
+``rsync`` に ``i`` を指定すると、以下のように更新のリストが表示されます。
+
+.. code-block:: bash
+        :linenos:
+
+        #iで更新のリストを表示
+	ueda@uedaubuntu:~$ rsync -auzi tofu.usptomonokai.jp:~/hoge ./
+	cd+++++++++ hoge/
+	>f+++++++++ hoge/file1
+	>f+++++++++ hoge/file2
+	>f+++++++++ hoge/file3
+        #もう一度実行すると、すでに同期済みなのでなにも表示されない
+	ueda@uedaubuntu:~$ rsync -auzi tofu.usptomonokai.jp:~/hoge ./
+	ueda@uedaubuntu:~$
+	
+また、 ``n`` を指定すると、 ``rsync`` は同期処理をしません。
+ドライランというやつです。
+
+　したがって、二行目の ``rsync`` では、実際に同期は行わず、
+同期に必要なファイルのリストがあれば、そのリストを出力します。
+その出力を ``wc -c`` に通して、 ``$NUM`` という変数に代入しています。
+同期の必要がなければなにもリストが出ないので、
+``$NUM`` はゼロになり、あれば非ゼロになります。
+
+　これで不必要な通知は画面に出なくなります。
+
+完成！
+========================================================================
+
+　余計な通知が出なくなったところで、完成としましょう。
+整理した ``TOFUBOX.SYNC`` をGitHub
+（ryuichiueda/SoftwareDesign/201211の下, 
+https://github.com/ryuichiueda/SoftwareDesign/blob/master/201211/client/TOFUBOX.SYNC）
+に掲載しておきました。
+整理と言っても、記号類がごちゃっとして綺麗ではありませんが・・・。
+これはコードの短さに免じて許してやってください。
+結局、クライアント側のコードは118行、サーバ側のコードは20行となりました。
+たった138行です。
+
+
+おわりに
+========================================================================
+　前回と今回で、オンラインストレージもどき「豆腐ボックス」
+を作りました。出てきたテクニックをまとめると次のようになります。
+
+* sshとrsyncのタイムアウト
+* rsyncの使い方あれこれ
+* notify-send
+* inotify（inotifywait）
+* mkdir を使った排他制御
+* service
+* sshを使ったリモートからのコマンド実行
+
+　筆者はこれらの何一つエキスパートということはないのですが、
+manを読んで、webで調べて、シェルスクリプトで組み合わせるだけで、
+なんとか豆腐ボックスを作りました。
+ユーザが使えるOSの機能はほとんどコマンドで準備されます。
+ですから、シェルスクリプトを書けると機能を総動員することができます。
+これが、シェルスクリプトでアプリケーション
+（あるいはアプリケーションのプロトタイプ）
+を書く一番の利点でしょう。
+
+
+　もしかしたら、他にもっと便利な機能があって、
+もっとコードを短くすることができるかもしれません。
+また、今回はやらなかったファイル消去の同期も可能かもしれません。
+
+　次回からは、Maildirに蓄えたメールをさばくというお題に取り組みます。
