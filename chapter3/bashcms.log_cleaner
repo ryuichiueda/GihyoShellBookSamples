@@ -1,0 +1,21 @@
+#!/bin/bash -vxe
+
+###移動###
+cd /var/www/www-data/
+###このスクリプトのログを残す###
+exec 2> ./$(basename $0).$(date +%Y%m%d%H%M%S).log
+
+###今日の日付のディレクトリを作る###
+dir="$(date +%Y%m%d)"
+[ "$dir" -gt "20140101" ]
+[ ! -e "$dir.tar.gz" ]
+mkdir -p "$dir"      
+
+###10日以前のファイルを抽出し、作ったディレクトリに移動###
+find -daystart -mtime 10     |
+xargs -I@ mv @ "./$dir/"
+
+###tar.gzに固める###
+tar -zcvf "$dir.tar.gz" "./$dir/" >&2
+###ディレクトリは邪魔なので消去###
+rm -Rf "./$dir/"

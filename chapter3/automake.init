@@ -1,0 +1,17 @@
+#!/bin/bash
+dir=/home/ueda/work
+
+case "$1" in
+start)
+    ps cax | grep -q "automake$" && exit 1
+    $dir/automake &
+;;
+stop)
+    killall automake
+    killall inotifywait
+;;
+*)
+    echo "Usage: automake {start|stop}" >&2
+    exit 1
+;;
+esac

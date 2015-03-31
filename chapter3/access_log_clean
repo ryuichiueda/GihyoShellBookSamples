@@ -1,0 +1,16 @@
+#!/bin/bash -xv
+
+B='\(.*\)'
+D='"\(.*\)"'
+P='\[\(.*\)\]'
+STR='\1\x0\2\x0\3\x0\4\x0\5\x0\6\x0\7\x0\8\x0\9\x0'
+
+sed 's;\\\\;%5C;g' < /dev/stdin             |
+sed 's;\\";%22;g'                           |
+sed "s/^$B $B $B $P $D $B $B $D $D\$/$STR/" |
+sed 's/_/\\_/g'                             |
+sed 's/ /_/g'                               |
+sed 's/\x0\x0/\x0_\x0/g'                    |
+sed 's/\x0\x0/\x0_\x0/g'                    |
+tr '\000' ' '                               |
+sed 's/ $//'

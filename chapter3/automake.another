@@ -1,0 +1,16 @@
+#!/bin/bash
+exec &>> /tmp/automake.log
+t="/tmp/automake.$$"
+dir="/home/ueda/work"
+
+while ps $$ > /dev/null ; do
+    sleep 1
+    [ -e "$t" ] || continue
+    rm -f "$t"
+    ( cd "$dir" && make )
+done &
+
+inotifywait -rm -e close_write "$dir" |
+while read line ; do
+    touch "$t"
+done

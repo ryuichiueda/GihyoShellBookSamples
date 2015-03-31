@@ -1,0 +1,6 @@
+#!/bin/bash -xv
+#このスクリプトはrootで毎日回すこと#
+
+dir= /var/tmp/ueda
+
+rm -rf $dir/
