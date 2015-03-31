@@ -1,0 +1,3 @@
+#!/bin/bash
+
+grep hoge *.rst | sed 's/:..*$//' | sort | uniq
