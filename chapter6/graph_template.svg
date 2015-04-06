@@ -1,0 +1,7 @@
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="200" height="200">
+<!--LIST-->
+  <rect x="50" y="%3" width="%2" height="15" fill="skyblue" stroke="blue" />
+<!--LIST-->
+  <text x="40" y="22" font-size="15" text-anchor="end" fill="black">山田</text>
+  <text x="150" y="22" font-size="15" text-anchor="start" fill="blue">95</text>
+</svg>

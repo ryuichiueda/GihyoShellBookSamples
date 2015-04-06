@@ -1,0 +1,19 @@
+#!/bin/bash
+
+echo magazine_sales/*		|
+#ファイル名
+xargs cat 			|
+#1:年月日 2:ID 3:冊数
+self 1.1.6 2 3			|
+#1:年月 2:ID 3:冊数
+sort -s -k1,2			|
+sm2 1 2 3 3			|
+sort -s -k2,2			|
+join1 key=2 member.name -	|
+#1:年月 2:ID 3:名前 4:冊数
+sort -s -k1,2			|
+delf 2				|
+#1:年月 2:名前 4:冊数
+map num=1			|
+#縦軸:年月 横軸:各個人
+keta 

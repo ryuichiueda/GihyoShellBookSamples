@@ -1,0 +1,17 @@
+#!/bin/bash 
+
+dir="$(dirname $0)/../data"
+
+error-check(){
+	[ $(plus ${PIPESTATUS[@]}) -eq 0 ] && return
+	echo "error: $0" >&2
+	exit 1
+}
+
+sort -c -k1,2 $dir/event.attend  &&
+sort -c -k1,1 $dir/event.name    &&
+sort -c -k1,1 $dir/member.board  &&
+sort -c -k1,1 $dir/member.name   &&
+sort -c -k1,1 $dir/member.number &&
+sort -c -k1,1 $dir/member.status 
+error-check
