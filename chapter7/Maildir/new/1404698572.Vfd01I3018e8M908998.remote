@@ -1,0 +1,51 @@
+Return-Path: <ueda-ryuichi@aiit.ac.jp>
+X-Original-To: ueda@test.usptomo.com
+Delivered-To: ueda@test.usptomo.com
+Received: from svdns002.aiit.ac.jp (svdns002.aiit.ac.jp [210.190.118.223])
+	by remote.sakura.ne.jp (Postfix) with ESMTP id D214F3E23C8
+	for <ueda@test.usptomo.com>; Mon,  7 Jul 2014 11:02:52 +0900 (JST)
+Received: from mail-la0-f54.google.com (mail-la0-f54.google.com [209.85.215.54])
+	by svdns002.aiit.ac.jp (Postfix) with ESMTP id 333F318502FE
+	for <ueda@test.usptomo.com>; Mon,  7 Jul 2014 11:02:51 +0900 (JST)
+Received: by mail-la0-f54.google.com with SMTP id mc6so2415805lab.13
+        for <ueda@test.usptomo.com>; Sun, 06 Jul 2014 19:02:50 -0700 (PDT)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20120113;
+        h=mime-version:sender:date:message-id:subject:from:to:content-type
+         :content-transfer-encoding;
+        bh=FWGSXQLqgUG7jdALZR9bomTumB4IIPXODaXT8Caci08=;
+        b=0/RK17CT3zX1J12lYE1H5Hj6jLvio8s2OM6Mit3kTZAPvJLA//oeOmkS/TMH/xc++D
+         ifaasrEPb/tUnfX5viosXefkRIR2+fY0ADt+a0yQXJjNRV6F8Lbu1/tjYX14TUJWRy93
+         XBTnQAIG8FFfQH9zbNZVNlCuZ1czU22UGidj8TDQFKm/vRZAiryiMjAtCCxteXXYEWrd
+         xDo8IosXxPkqhtrPCq1FWRsIntxiQUo1RZoXmGBvQWDcFVLdASszDsH2ZsLuVYs7lJDs
+         NHRJ2QKBlqFjUxoTuRJii6Gqr+wjPWXVKOOdVKjY+AnX6eFyxn66tn0YF1mz6/FxeMa9
+         2Kkw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20130820;
+        h=x-gm-message-state:mime-version:sender:date:message-id:subject:from
+         :to:content-type:content-transfer-encoding;
+        bh=FWGSXQLqgUG7jdALZR9bomTumB4IIPXODaXT8Caci08=;
+        b=d3xesM/Skp7WJVBjLx21S/IaUM6spn76xBdKK+HfynoDZLYZnhXZuMpUPXk9K/XV/d
+         akqatSkKDejjj3tbp/Xlq6of8Zy4otrsEVpB0Pj+ago0iRgZogRMNigSEwi4JVislpNM
+         4c9mgjc4ko22SUwdFT/v/UPJr/UhM8dqtexqMAAhf8/dL6KiwziVTAZDvWLmMSxcckGK
+         VupUHmCI1SXIo+v9WZR4HmhFzNRE0xpoDnfbG2TJSH2hLxdbYm5KmvLtLjqtlBK1HxZI
+         4Sj55mjkTJasnGD6m8GMBVHwnUGvMauMbGAZJcGlOq/0iA5MuKKxz8HP8g7l8PcNgilB
+         JFfA==
+X-Gm-Message-State: ALoCoQmVDqfXhuDfES3PNxozTrZNPZm/J9z24EgAZFJibhmIr9Tnb3hDXroPB2UCXYu5FiKkAvVy8mGZvEfPEGEvcY4wxpqLwgSf1AJGIO5QfU//d5g3w9HDN3YMdpjVXrIJ7PA6FArI
+X-Received: by 10.112.163.65 with SMTP id yg1mr19912715lbb.44.1404698570973;
+        Sun, 06 Jul 2014 19:02:50 -0700 (PDT)
+MIME-Version: 1.0
+X-Received: by 10.112.163.65 with SMTP id yg1mr19912710lbb.44.1404698570911;
+ Sun, 06 Jul 2014 19:02:50 -0700 (PDT)
+Sender: ueda-ryuichi@aiit.ac.jp
+Received: by 10.114.245.6 with HTTP; Sun, 6 Jul 2014 19:02:50 -0700 (PDT)
+Date: Mon, 7 Jul 2014 11:02:50 +0900
+X-Google-Sender-Auth: qzpa-_Myib0jXQOsnJgfYZuS5Uw
+Message-ID: <CAEv3oYWUJLwYV8-XDvRKpx5F4cWCgN_=c6u8V-pe3FbrPFaQNA@mail.gmail.com>
+Subject: =?UTF-8?B?44OG44K544OI44Gg44KI?=
+From: =?UTF-8?B?5LiK55Sw6ZqG5LiA?= <ryuichiueda@gmail.com>
+To: ueda@test.usptomo.com
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: base64
+
+5YWo5ZOh6ZuG5ZCIDQoNCuiNieOAhQ0K

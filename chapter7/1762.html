@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<!--[if IE 7]>
+<html class="ie ie7" lang="ja">
+<![endif]-->
+<!--[if IE 8]>
+<html class="ie ie8" lang="ja">
+<![endif]-->
+<!--[if !(IE 7) & !(IE 8)]><!-->
+<html lang="ja">
+<!--<![endif]-->
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width" />
+<title>Structure and Interpretation of Computer Programs読書会11回目メモ書き | 上田ブログ</title>
+<link rel="profile" href="http://gmpg.org/xfn/11" />
+<link rel="pingback" href="http://blog.ueda.asia/xmlrpc.php" />
+<!--[if lt IE 9]>
+<script src="http://blog.ueda.asia/wp-content/themes/twentytwelve/js/html5.js" type="text/javascript"></script>
+<![endif]-->
+<link rel="alternate" type="application/rss+xml" title="上田ブログ &raquo; フィード" href="http://blog.ueda.asia/?feed=rss2" />
+<link rel="alternate" type="application/rss+xml" title="上田ブログ &raquo; コメントフィード" href="http://blog.ueda.asia/?feed=comments-rss2" />
+<link rel="alternate" type="application/rss+xml" title="上田ブログ &raquo; Structure and Interpretation of Computer Programs読書会11回目メモ書き のコメントのフィード" href="http://blog.ueda.asia/?feed=rss2&#038;p=1762" />
+<link rel='stylesheet' id='twentytwelve-fonts-css'  href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,700italic,400,700&#038;subset=latin,latin-ext' type='text/css' media='all' />
+<link rel='stylesheet' id='twentytwelve-style-css'  href='http://blog.ueda.asia/wp-content/themes/twentytwelve/style.css?ver=4.1.1' type='text/css' media='all' />
+<!--[if lt IE 9]>
+<link rel='stylesheet' id='twentytwelve-ie-css'  href='http://blog.ueda.asia/wp-content/themes/twentytwelve/css/ie.css?ver=20121010' type='text/css' media='all' />
+<![endif]-->
+<script type='text/javascript' src='http://blog.ueda.asia/wp-includes/js/jquery/jquery.js?ver=1.11.1'></script>
+<script type='text/javascript' src='http://blog.ueda.asia/wp-includes/js/jquery/jquery-migrate.min.js?ver=1.2.1'></script>
+<script type='text/javascript' src='http://blog.ueda.asia/wp-content/plugins/google-analyticator/external-tracking.min.js?ver=6.4.8'></script>
+<link rel="EditURI" type="application/rsd+xml" title="RSD" href="http://blog.ueda.asia/xmlrpc.php?rsd" />
+<link rel="wlwmanifest" type="application/wlwmanifest+xml" href="http://blog.ueda.asia/wp-includes/wlwmanifest.xml" /> 
+<link rel='prev' title='Haskell版dayslash作った' href='http://blog.ueda.asia/?p=1760' />
+<link rel='next' title='ちなみに、スクリプトとは、掲示板を荒らすためのプログラムのこと。' href='http://blog.ueda.asia/?p=1770' />
+<meta name="generator" content="WordPress 4.1.1" />
+<link rel='canonical' href='http://blog.ueda.asia/?p=1762' />
+<link rel='shortlink' href='http://blog.ueda.asia/?p=1762' />
+<!-- BEGIN: WP Social Bookmarking Light -->
+<script type="text/javascript" src="http://platform.tumblr.com/v1/share.js"></script><script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/ja_JP/sdk.js#xfbml=1&version=v2.0";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));</script>   
+<style type="text/css">
+.wp_social_bookmarking_light{
+    border: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+.wp_social_bookmarking_light div{
+    float: left !important;
+    border: 0 !important;
+    padding: 0 !important;
+    margin: 0 5px 0px 0 !important;
+    height: 23px !important;
+    text-indent: 0 !important;
+}
+.wp_social_bookmarking_light img{
+    border: 0 !important;
+    padding: 0;
+    margin: 0;
+    vertical-align: top !important;
+}
+.wp_social_bookmarking_light_clear{
+    clear: both !important;
+}
+.wsbl_twitter{
+    width: 100px;
+}
+
+.wsbl_facebook_like iframe{
+max-width:none !important;
+}</style>
+<!-- END: WP Social Bookmarking Light -->
+<style type="text/css" id="syntaxhighlighteranchor"></style>
+<!-- Google Analytics Tracking by Google Analyticator 6.4.8: http://www.videousermanuals.com/google-analyticator/ -->
+<script type="text/javascript">
+    var analyticsFileTypes = [''];
+    var analyticsSnippet = 'disabled';
+    var analyticsEventTracking = 'enabled';
+</script>
+<script type="text/javascript">
+	(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+	(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+	m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+	})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+	ga('create', 'UA-39565206-1', 'auto');
+ 
+	ga('send', 'pageview');
+</script>
+</head>
+
+<body class="single single-post postid-1762 single-format-standard custom-background custom-font-enabled single-author">
+
+<div id="page" class="hfeed site">
+	<header id="masthead" class="site-header" role="banner">
+		<hgroup>
+			<h1 class="site-title"><a href="http://blog.ueda.asia/" title="上田ブログ" rel="home">上田ブログ</a></h1>
+			<h2 class="site-description">やっていることが少々発散気味で・・・</h2>
+		</hgroup>
+
+		<nav id="site-navigation" class="main-navigation" role="navigation">
+			<button class="menu-toggle">メニュー</button>
+			<a class="assistive-text" href="#content" title="コンテンツへ移動">コンテンツへ移動</a>
+			<div class="menu-%e3%83%a1%e3%82%a4%e3%83%b3%e3%83%a1%e3%83%8b%e3%83%a5%e3%83%bc-container"><ul id="menu-%e3%83%a1%e3%82%a4%e3%83%b3%e3%83%a1%e3%83%8b%e3%83%a5%e3%83%bc" class="nav-menu"><li id="menu-item-758" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-home menu-item-758"><a href="http://blog.ueda.asia/">ホーム</a></li>
+<li id="menu-item-759" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-759"><a href="http://blog.ueda.asia/?page_id=684">シェル芸勉強会スライド一覧</a></li>
+<li id="menu-item-760" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-760"><a href="http://blog.ueda.asia/?page_id=728">出版物リスト</a></li>
+<li id="menu-item-863" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-863"><a href="http://blog.ueda.asia/?page_id=811">関連ページ</a>
+<ul class="sub-menu">
+	<li id="menu-item-866" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-866"><a href="http://www.usptomo.com">USP友の会</a></li>
+	<li id="menu-item-867" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-867"><a href="http://www.araibo.com">Team ARAIBO</a></li>
+	<li id="menu-item-865" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-865"><a href="http://blog.ueda.asia/?page_id=851">ARAIBOムービーまとめ</a></li>
+	<li id="menu-item-869" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-869"><a href="http://www.araibo.com/ueda/">[:ja]昔のサイト[:en]my old site</a></li>
+</ul>
+</li>
+<li id="menu-item-826" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-826"><a href="http://blog.ueda.asia/?page_id=823">受賞等</a></li>
+<li id="menu-item-1755" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-1755"><a href="http://blog.ueda.asia/?page_id=1754">書き物以外の仕事</a>
+<ul class="sub-menu">
+	<li id="menu-item-1753" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-1753"><a href="http://blog.ueda.asia/?page_id=1746">学会等の活動記録</a></li>
+	<li id="menu-item-2433" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-2433"><a href="http://blog.ueda.asia/?page_id=2317">外部獲得資金</a></li>
+</ul>
+</li>
+<li id="menu-item-1244" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-1244"><a href="http://blog.ueda.asia/?page_id=1242">misc</a>
+<ul class="sub-menu">
+	<li id="menu-item-4222" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-4222"><a href="http://blog.ueda.asia/?page_id=4219">dashのコード解読メモ</a>
+	<ul class="sub-menu">
+		<li id="menu-item-4226" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4226"><a href="http://blog.ueda.asia/?page_id=4223">dash/src/main.h, main.c</a></li>
+		<li id="menu-item-4294" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4294"><a href="http://blog.ueda.asia/?page_id=4276">dash/src/shell.h</a></li>
+		<li id="menu-item-4348" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4348"><a href="http://blog.ueda.asia/?page_id=4346">dash/src/eval.h, eval.c</a></li>
+	</ul>
+</li>
+	<li id="menu-item-2245" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-2245"><a href="http://blog.ueda.asia/?page_id=2243">復活。査読カウンター</a></li>
+	<li id="menu-item-1981" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-1981"><a href="http://blog.ueda.asia/?page_id=1980">おはようございますの世紀</a></li>
+	<li id="menu-item-1437" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-1437"><a href="http://blog.ueda.asia/?page_id=1434">シェル芸の定義</a></li>
+	<li id="menu-item-3753" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3753"><a href="http://blog.ueda.asia/?page_id=3752">危険シェル芸の定義（笑）</a></li>
+	<li id="menu-item-1336" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-1336"><a href="http://blog.ueda.asia/?page_id=1333">昔作ったアプレットなど</a></li>
+	<li id="menu-item-1241" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-1241"><a href="http://blog.ueda.asia/conferences.html">学術団体Twitter一覧</a></li>
+</ul>
+</li>
+<li id="menu-item-1930" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-1930"><a href="http://ask.fm/ryuichiueda">質問はここへ</a></li>
+<li id="menu-item-5536" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-5536"><a href="http://blog.ueda.asia/?page_id=5535">書籍の情報</a>
+<ul class="sub-menu">
+	<li id="menu-item-3239" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3239"><a href="http://blog.ueda.asia/?page_id=3237">シェルスクリプト高速開発手法入門</a></li>
+	<li id="menu-item-1445" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-1445"><a href="http://blog.ueda.asia/?page_id=1441">確率ロボティクス</a></li>
+</ul>
+</li>
+<li id="menu-item-2941" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-2941"><a href="http://blog.ueda.asia/?page_id=2939">雑誌連載記事の情報</a>
+<ul class="sub-menu">
+	<li id="menu-item-2947" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-2947"><a href="http://blog.ueda.asia/?page_id=2944">Haskellでやってはいかんのか？ | USP Magazine</a>
+	<ul class="sub-menu">
+		<li id="menu-item-3282" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3282"><a href="http://blog.ueda.asia/?page_id=3280">USP Magazine 2014年4月号「シェル芸勉強会後追い企画 Haskellでやってはいかんのか？</a></li>
+	</ul>
+</li>
+	<li id="menu-item-2952" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-2952"><a href="http://blog.ueda.asia/?page_id=2949">開眼シェルスクリプト | SoftwareDesign</a>
+	<ul class="sub-menu">
+		<li id="menu-item-4488" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4488"><a href="http://blog.ueda.asia/?page_id=4485">開眼シェルスクリプト2012年1月号</a></li>
+		<li id="menu-item-4491" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4491"><a href="http://blog.ueda.asia/?page_id=4490">開眼シェルスクリプト2012年2月号</a></li>
+		<li id="menu-item-4498" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4498"><a href="http://blog.ueda.asia/?page_id=4497">開眼シェルスクリプト2012年3月号</a></li>
+		<li id="menu-item-4503" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4503"><a href="http://blog.ueda.asia/?page_id=4502">開眼シェルスクリプト2014年4月号</a></li>
+		<li id="menu-item-4508" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4508"><a href="http://blog.ueda.asia/?page_id=4507">開眼シェルスクリプト2012年5月号</a></li>
+		<li id="menu-item-4512" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4512"><a href="http://blog.ueda.asia/?page_id=4511">開眼シェルスクリプト2012年6月号</a></li>
+		<li id="menu-item-4517" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4517"><a href="http://blog.ueda.asia/?page_id=4516">開眼シェルスクリプト2012年7月号</a></li>
+		<li id="menu-item-4524" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4524"><a href="http://blog.ueda.asia/?page_id=4520">開眼シェルスクリプト2012年8月号</a></li>
+		<li id="menu-item-4526" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4526"><a href="http://blog.ueda.asia/?page_id=4525">開眼シェルスクリプト2012年9月号</a></li>
+		<li id="menu-item-4530" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4530"><a href="http://blog.ueda.asia/?page_id=4529">開眼シェルスクリプト2012年10月号</a></li>
+		<li id="menu-item-4535" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4535"><a href="http://blog.ueda.asia/?page_id=4534">開眼シェルスクリプト2012年11月号</a></li>
+		<li id="menu-item-4538" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4538"><a href="http://blog.ueda.asia/?page_id=4537">開眼シェルスクリプト2012年12月号</a></li>
+		<li id="menu-item-4550" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4550"><a href="http://blog.ueda.asia/?page_id=4541">開眼シェルスクリプト2013年1月号</a></li>
+		<li id="menu-item-4549" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4549"><a href="http://blog.ueda.asia/?page_id=4544">開眼シェルスクリプト2013年2月号</a></li>
+		<li id="menu-item-4561" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4561"><a href="http://blog.ueda.asia/?page_id=4560">開眼シェルスクリプト2013年3月号</a></li>
+		<li id="menu-item-4576" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4576"><a href="http://blog.ueda.asia/?page_id=4575">開眼シェルスクリプト2013年4月号</a></li>
+		<li id="menu-item-4591" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4591"><a href="http://blog.ueda.asia/?page_id=4590">開眼シェルスクリプト2013年5月号</a></li>
+		<li id="menu-item-4596" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4596"><a href="http://blog.ueda.asia/?page_id=4595">開眼シェルスクリプト2013年6月号</a></li>
+		<li id="menu-item-4599" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4599"><a href="http://blog.ueda.asia/?page_id=4598">開眼シェルスクリプト2013年7月号</a></li>
+		<li id="menu-item-4611" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4611"><a href="http://blog.ueda.asia/?page_id=4610">開眼シェルスクリプト2013年8月号</a></li>
+		<li id="menu-item-4624" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4624"><a href="http://blog.ueda.asia/?page_id=4623">開眼シェルスクリプト2013年9月号</a></li>
+		<li id="menu-item-4633" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4633"><a href="http://blog.ueda.asia/?page_id=4631">開眼シェルスクリプト2013年10月号</a></li>
+		<li id="menu-item-4636" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4636"><a href="http://blog.ueda.asia/?page_id=4635">開眼シェルスクリプト2013年11月号</a></li>
+		<li id="menu-item-4641" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-4641"><a href="http://blog.ueda.asia/?page_id=4638">開眼シェルスクリプト2013年12月号</a></li>
+	</ul>
+</li>
+</ul>
+</li>
+<li id="menu-item-3343" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-3343"><a href="http://blog.ueda.asia/?page_id=3237">シェルスクリプト高速開発手法入門</a>
+<ul class="sub-menu">
+	<li id="menu-item-3345" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-3345"><a href="http://blog.ueda.asia/?page_id=3344">正誤表 | シェルスクリプト高速開発技術入門</a></li>
+</ul>
+</li>
+<li id="menu-item-5091" class="menu-item menu-item-type-custom menu-item-object-custom menu-item-5091"><a href="http://en.ueda.asia">English site</a></li>
+<li id="menu-item-5578" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-5578"><a href="http://blog.ueda.asia/?page_id=5567">シェル芸勉強会参加者数</a></li>
+<li id="menu-item-5653" class="menu-item menu-item-type-post_type menu-item-object-page menu-item-5653"><a href="http://blog.ueda.asia/?page_id=5649">シェル芸練習用データ集</a></li>
+</ul></div>		</nav><!-- #site-navigation -->
+
+			</header><!-- #masthead -->
+
+	<div id="main" class="wrapper">
+	<div id="primary" class="site-content">
+
+		<div id="content" role="main">
+
+			
+				
+	<article id="post-1762" class="post-1762 post type-post status-publish format-standard hentry category-sicp category-3 tag-sicp tag-235">
+				<header class="entry-header">
+			
+						<h1 class="entry-title"><!--:ja-->Structure and Interpretation of Computer Programs読書会11回目メモ書き<!--:--></h1>
+								</header><!-- .entry-header -->
+
+				<div class="entry-content">
+			<div class='wp_social_bookmarking_light'><div class="wsbl_hatena_button"><a href="http://b.hatena.ne.jp/entry/http://blog.ueda.asia/?p=1762" class="hatena-bookmark-button" data-hatena-bookmark-title="<!--:ja-->Structure and Interpretation of Computer Programs読書会11回目メモ書き<!--:-->" data-hatena-bookmark-layout="standard" title="このエントリーをはてなブックマークに追加"> <img src="//b.hatena.ne.jp/images/entry-button/button-only@2x.png" alt="このエントリーをはてなブックマークに追加" width="20" height="20" style="border: none;" /></a><script type="text/javascript" src="//b.hatena.ne.jp/js/bookmark_button.js" charset="utf-8" async="async"></script></div><div class="wsbl_facebook_like"><div id="fb-root"></div><fb:like href="http://blog.ueda.asia/?p=1762" layout="button_count" action="like" width="500" share="false" show_faces="false" ></fb:like></div><div class="wsbl_twitter"><iframe allowtransparency="true" frameborder="0" scrolling="no" src="//platform.twitter.com/widgets/tweet_button.html?url=http%3A%2F%2Fblog.ueda.asia%2F%3Fp%3D1762&amp;text=%3C%21--%3Aja--%3EStructure%20and%20Interpretation%20of%20Computer%20Programs%E8%AA%AD%E6%9B%B8%E4%BC%9A11%E5%9B%9E%E7%9B%AE%E3%83%A1%E3%83%A2%E6%9B%B8%E3%81%8D%3C%21--%3A--%3E&amp;via=ryuichiueda&amp;lang=ja&amp;count=horizontal" style="width:130px; height:20px;"></iframe></div><div class="wsbl_google_plus_one"><g:plusone size="medium" annotation="none" href="http://blog.ueda.asia/?p=1762" ></g:plusone></div><div class="wsbl_line"><a href='http://line.me/R/msg/text/?%3C%21--%3Aja--%3EStructure%20and%20Interpretation%20of%20Computer%20Programs%E8%AA%AD%E6%9B%B8%E4%BC%9A11%E5%9B%9E%E7%9B%AE%E3%83%A1%E3%83%A2%E6%9B%B8%E3%81%8D%3C%21--%3A--%3E%0D%0Ahttp%3A%2F%2Fblog.ueda.asia%2F%3Fp%3D1762' title='LINEで送る' rel=nofollow class='wp_social_bookmarking_light_a' ><img src='http://blog.ueda.asia/wp-content/plugins/wp-social-bookmarking-light/images/line88x20.png' alt='LINEで送る' title='LINEで送る' width='88' height='20' class='wp_social_bookmarking_light_img' /></a></div><div class="wsbl_tumblr"><a href="http://www.tumblr.com/share?v=3&u=http%3A%2F%2Fblog.ueda.asia%2F%3Fp%3D1762&t=%3C%21--%3Aja--%3EStructure%20and%20Interpretation%20of%20Computer%20Programs%E8%AA%AD%E6%9B%B8%E4%BC%9A11%E5%9B%9E%E7%9B%AE%E3%83%A1%E3%83%A2%E6%9B%B8%E3%81%8D%3C%21--%3A--%3E" title="" style="display:inline-block; text-indent:-9999px; overflow:hidden; width:81px; height:20px; background:url('http://platform.tumblr.com/v1/share_1.png') top left no-repeat transparent;"></a></div></div><br class='wp_social_bookmarking_light_clear' /><p><!--:ja-->本日断行いたしました。得られた知見を・・・。しかし、毎回知見が出鱈目なんだが、もし検索で辿り着いた人がいたらどう思うかねこれ？？？</p>
+<ul id="jokelist">
+<li>Xの目はマウスの位置を教えてくれる。</li>
+<li>mapと言えばreduceと言うのは小学生まで。</li>
+<li>木構造をトポロジカルに見ると、どれが親か分からなくなる。</li>
+<li>木構造は直接post scriptで書け。</li>
+<li>listは興奮シュガー</li>
+</ul>
+<p><br/><br />
+まあ、しょうがない。</p>
+<p>寝る。いや、もうちょっとビール飲む。<!--:--><!--:en-->本日断行いたしました。得られた知見を・・・。しかし、毎回知見が出鱈目なんだが、もし検索で辿り着いた人がいたらどう思うかねこれ？？？</p>
+<ul>
+<li>Xの目はマウスの位置を教えてくれる。</li>
+<li>mapと言えばreduceと言うのは小学生まで。</li>
+<li>木構造をトポロジカルに見ると、どれが親か分からなくなる。</li>
+<li>木構造は直接post scriptで書け。</li>
+<li>listは興奮シュガー</li>
+<ul>
+<p><br/><br />
+まあ、しょうがない。</p>
+<p>寝る。いや、もうちょっとビール飲む。<!--:--></p>
+					</div><!-- .entry-content -->
+		
+		<footer class="entry-meta">
+			カテゴリー: <a href="http://blog.ueda.asia/?cat=128" rel="category">sicp</a>, <a href="http://blog.ueda.asia/?cat=3" rel="category">プログラミング</a> | タグ: <a href="http://blog.ueda.asia/?tag=sicp" rel="tag">sicp</a>, <a href="http://blog.ueda.asia/?tag=%e8%88%88%e5%a5%ae%e3%82%b7%e3%83%a5%e3%82%ac%e3%83%bc" rel="tag">興奮シュガー</a> | 投稿日: <a href="http://blog.ueda.asia/?p=1762" title="11:46 PM" rel="bookmark"><time class="entry-date" datetime="2013-12-17T23:46:16+00:00">12月 17, 2013</time></a> | <span class="by-author">投稿者: <span class="author vcard"><a class="url fn n" href="http://blog.ueda.asia/?author=1" title="ueda の投稿をすべて表示" rel="author">ueda</a></span></span>								</footer><!-- .entry-meta -->
+	</article><!-- #post -->
+
+<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- auto -->
+<ins class="adsbygoogle"
+     style="display:block"
+     data-ad-client="ca-pub-7242808947152948"
+     data-ad-slot="5694499533"
+     data-ad-format="auto"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script>
+
+				<nav class="nav-single">
+					<h3 class="assistive-text">投稿ナビゲーション</h3>
+					<span class="nav-previous"><a href="http://blog.ueda.asia/?p=1760" rel="prev"><span class="meta-nav">&larr;</span> Haskell版dayslash作った</a></span>
+					<span class="nav-next"><a href="http://blog.ueda.asia/?p=1770" rel="next">ちなみに、スクリプトとは、掲示板を荒らすためのプログラムのこと。 <span class="meta-nav">&rarr;</span></a></span>
+				</nav><!-- .nav-single -->
+
+				
+<div id="comments" class="comments-area">
+
+	
+	
+			
+</div><!-- #comments .comments-area -->
+			
+		</div><!-- #content -->
+	</div><!-- #primary -->
+
+
+			<div id="secondary" class="widget-area" role="complementary">
+			<aside id="search-2" class="widget widget_search"><form role="search" method="get" id="searchform" class="searchform" action="http://blog.ueda.asia/">
+				<div>
+					<label class="screen-reader-text" for="s">検索:</label>
+					<input type="text" value="" name="s" id="s" />
+					<input type="submit" id="searchsubmit" value="検索" />
+				</div>
+			</form></aside><aside id="adsense-manager-2" class="widget widget_adsensem"><script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+<!-- topright -->
+<ins class="adsbygoogle"
+     style="display:inline-block;width:250px;height:250px"
+     data-ad-client="ca-pub-7242808947152948"
+     data-ad-slot="3118565131"></ins>
+<script>
+(adsbygoogle = window.adsbygoogle || []).push({});
+</script></aside></aside><aside id="views-2" class="widget widget_views"><h3 class="widget-title">人気ページ</h3><ul>
+<li><a href="http://blog.ueda.asia/?p=3967"  title="先程から騒ぎになっているbashの脆弱性について">先程から騒ぎになっているbashの脆弱性について</a> - 40,199 views</li><li><a href="http://blog.ueda.asia/?p=2339"  title="結論の書き方をちゃんと指導教員は教えてくれましたでしょうか？">結論の書き方をちゃんと指導教員は教えてくれましたでしょうか？</a> - 27,938 views</li><li><a href="http://blog.ueda.asia/?p=2157"  title="SI業界がIT化してないとか酷いことを言ってしまった">SI業界がIT化してないとか酷いことを言ってしまった</a> - 27,454 views</li><li><a href="http://blog.ueda.asia/?p=1380"  title="出版社に送る原稿には日本語と英単語の間にスペースを入れない方が良いらしいので贖罪のためにシェル芸やります。">出版社に送る原稿には日本語と英単語の間にスペースを入れない方が良いらしいので贖罪のためにシェル芸やります。</a> - 18,614 views</li><li><a href="http://blog.ueda.asia/?page_id=684"  title="シェル芸勉強会スライド一覧">シェル芸勉強会スライド一覧</a> - 14,145 views</li><li><a href="http://blog.ueda.asia/?p=2179"  title="【おじいちゃん消化器持ってきて！】SI業界がIT化してないとか酷いことを言ってしまったので早めに火消しを計る【天ぷら油が！】">【おじいちゃん消化器持ってきて！】SI業界がIT化してないとか酷いことを言ってしまったので早めに火消しを計る【天ぷら油が！】</a> - 7,860 views</li><li><a href="http://blog.ueda.asia/?p=544"  title="variable length array で配列の要素数の限界を調べた（しかしvariable length arrayあまり関係ない）">variable length array で配列の要素数の限界を調べた（しかしvariable length arrayあまり関係ない）</a> - 5,127 views</li><li><a href="http://blog.ueda.asia/?p=1549"  title="「奥さん、その写真、どこで撮ったかバレてますよ」的な問題に対するシェル芸的な対策">「奥さん、その写真、どこで撮ったかバレてますよ」的な問題に対するシェル芸的な対策</a> - 5,075 views</li><li><a href="http://blog.ueda.asia/?p=507"  title="C言語（C99）の variable length array というものを初体験">C言語（C99）の variable length array というものを初体験</a> - 4,642 views</li><li><a href="http://blog.ueda.asia/?p=1369"  title="OS X 10.9 で Command Line Tools をインストールする方法">OS X 10.9 で Command Line Tools をインストールする方法</a> - 4,571 views</li></ul>
+</aside>		<aside id="recent-posts-2" class="widget widget_recent_entries">		<h3 class="widget-title">最近の投稿</h3>		<ul>
+					<li>
+				<a href="http://blog.ueda.asia/?p=5698">Hadoopのpigを使うときに設定ではまったところメモ</a>
+						</li>
+					<li>
+				<a href="http://blog.ueda.asia/?p=5691">gawkで2進数にしたときの桁数を求めたいんだがどうしたものか</a>
+						</li>
+					<li>
+				<a href="http://blog.ueda.asia/?p=5683">日記（確率ロボティクス復刊等）</a>
+						</li>
+					<li>
+				<a href="http://blog.ueda.asia/?p=5660">第16回シェル芸勉強会で使うログ（邪悪なApache ShellShockログ）を公開します</a>
+						</li>
+					<li>
+				<a href="http://blog.ueda.asia/?p=5620">【エイプリルフールは終了しました】シェル芸が実写化されました</a>
+						</li>
+				</ul>
+		</aside><aside id="archives-2" class="widget widget_archive"><h3 class="widget-title">アーカイブ</h3>		<select name="archive-dropdown" onchange='document.location.href=this.options[this.selectedIndex].value;'>
+			<option value="">月を選択</option>
+
+				<option value='http://blog.ueda.asia/?m=201504'> 2015年4月 &nbsp;(5)</option>
+	<option value='http://blog.ueda.asia/?m=201503'> 2015年3月 &nbsp;(12)</option>
+	<option value='http://blog.ueda.asia/?m=201502'> 2015年2月 &nbsp;(12)</option>
+	<option value='http://blog.ueda.asia/?m=201501'> 2015年1月 &nbsp;(16)</option>
+	<option value='http://blog.ueda.asia/?m=201412'> 2014年12月 &nbsp;(9)</option>
+	<option value='http://blog.ueda.asia/?m=201411'> 2014年11月 &nbsp;(9)</option>
+	<option value='http://blog.ueda.asia/?m=201410'> 2014年10月 &nbsp;(8)</option>
+	<option value='http://blog.ueda.asia/?m=201409'> 2014年9月 &nbsp;(10)</option>
+	<option value='http://blog.ueda.asia/?m=201408'> 2014年8月 &nbsp;(10)</option>
+	<option value='http://blog.ueda.asia/?m=201407'> 2014年7月 &nbsp;(13)</option>
+	<option value='http://blog.ueda.asia/?m=201406'> 2014年6月 &nbsp;(8)</option>
+	<option value='http://blog.ueda.asia/?m=201405'> 2014年5月 &nbsp;(11)</option>
+	<option value='http://blog.ueda.asia/?m=201404'> 2014年4月 &nbsp;(30)</option>
+	<option value='http://blog.ueda.asia/?m=201403'> 2014年3月 &nbsp;(20)</option>
+	<option value='http://blog.ueda.asia/?m=201402'> 2014年2月 &nbsp;(13)</option>
+	<option value='http://blog.ueda.asia/?m=201401'> 2014年1月 &nbsp;(12)</option>
+	<option value='http://blog.ueda.asia/?m=201312'> 2013年12月 &nbsp;(18)</option>
+	<option value='http://blog.ueda.asia/?m=201311'> 2013年11月 &nbsp;(21)</option>
+	<option value='http://blog.ueda.asia/?m=201310'> 2013年10月 &nbsp;(12)</option>
+	<option value='http://blog.ueda.asia/?m=201309'> 2013年9月 &nbsp;(13)</option>
+	<option value='http://blog.ueda.asia/?m=201308'> 2013年8月 &nbsp;(14)</option>
+	<option value='http://blog.ueda.asia/?m=201307'> 2013年7月 &nbsp;(14)</option>
+	<option value='http://blog.ueda.asia/?m=201306'> 2013年6月 &nbsp;(5)</option>
+	<option value='http://blog.ueda.asia/?m=201305'> 2013年5月 &nbsp;(2)</option>
+	<option value='http://blog.ueda.asia/?m=201304'> 2013年4月 &nbsp;(13)</option>
+	<option value='http://blog.ueda.asia/?m=201303'> 2013年3月 &nbsp;(14)</option>
+		</select>
+</aside><aside id="categories-2" class="widget widget_categories"><h3 class="widget-title">カテゴリー</h3><select name='cat' id='cat' class='postform' >
+	<option value='-1'>カテゴリーを選択</option>
+	<option class="level-0" value="231">1000 speakers conf. in Eng.&nbsp;&nbsp;(4)</option>
+	<option class="level-0" value="205">AIIT&nbsp;&nbsp;(5)</option>
+	<option class="level-0" value="23">apache&nbsp;&nbsp;(3)</option>
+	<option class="level-0" value="370">bashCMS&nbsp;&nbsp;(4)</option>
+	<option class="level-0" value="404">C/C++&nbsp;&nbsp;(4)</option>
+	<option class="level-0" value="167">CLI&nbsp;&nbsp;(35)</option>
+	<option class="level-0" value="384">Family &amp; Robotics&nbsp;&nbsp;(2)</option>
+	<option class="level-0" value="457">GlueLang&nbsp;&nbsp;(17)</option>
+	<option class="level-0" value="4">Haskell&nbsp;&nbsp;(20)</option>
+	<option class="level-0" value="25">Linux&nbsp;&nbsp;(14)</option>
+	<option class="level-0" value="180">Mac&nbsp;&nbsp;(10)</option>
+	<option class="level-0" value="43">pmat&nbsp;&nbsp;(4)</option>
+	<option class="level-0" value="36">RoboCup&nbsp;&nbsp;(1)</option>
+	<option class="level-0" value="128">sicp&nbsp;&nbsp;(25)</option>
+	<option class="level-0" value="101">TechLION&nbsp;&nbsp;(6)</option>
+	<option class="level-0" value="22">UNIX/Linuxサーバ&nbsp;&nbsp;(22)</option>
+	<option class="level-0" value="21">USP友の会&nbsp;&nbsp;(40)</option>
+	<option class="level-0" value="92">ご報告&nbsp;&nbsp;(19)</option>
+	<option class="level-0" value="91">ご挨拶&nbsp;&nbsp;(6)</option>
+	<option class="level-0" value="19">どうでもいい&nbsp;&nbsp;(72)</option>
+	<option class="level-0" value="310">エクシェル芸&nbsp;&nbsp;(7)</option>
+	<option class="level-0" value="272">グルー言語を作る&nbsp;&nbsp;(17)</option>
+	<option class="level-0" value="125">コマンド&nbsp;&nbsp;(37)</option>
+	<option class="level-0" value="44">シェルスクリプト&nbsp;&nbsp;(26)</option>
+	<option class="level-0" value="373">シェルスクリプト高速開発手法&nbsp;&nbsp;(9)</option>
+	<option class="level-0" value="98">シェル芸&nbsp;&nbsp;(76)</option>
+	<option class="level-0" value="335">デス研&nbsp;&nbsp;(5)</option>
+	<option class="level-0" value="3">プログラミング&nbsp;&nbsp;(44)</option>
+	<option class="level-0" value="35">ロボカップ&nbsp;&nbsp;(2)</option>
+	<option class="level-0" value="361">一行感想文&nbsp;&nbsp;(1)</option>
+	<option class="level-0" value="29">写真とった&nbsp;&nbsp;(18)</option>
+	<option class="level-0" value="185">別のサイトのポインタ&nbsp;&nbsp;(7)</option>
+	<option class="level-0" value="221">勉強会&nbsp;&nbsp;(39)</option>
+	<option class="level-0" value="81">執筆&nbsp;&nbsp;(19)</option>
+	<option class="level-0" value="18">寝る&nbsp;&nbsp;(51)</option>
+	<option class="level-0" value="476">日記&nbsp;&nbsp;(7)</option>
+	<option class="level-0" value="279">書評&nbsp;&nbsp;(9)</option>
+	<option class="level-0" value="1">未分類&nbsp;&nbsp;(9)</option>
+	<option class="level-0" value="8">研究&nbsp;&nbsp;(23)</option>
+	<option class="level-0" value="504">確率ロボティクス&nbsp;&nbsp;(4)</option>
+	<option class="level-0" value="12">頭の中だだ漏らし&nbsp;&nbsp;(64)</option>
+</select>
+
+<script type='text/javascript'>
+/* <![CDATA[ */
+	var dropdown = document.getElementById("cat");
+	function onCatChange() {
+		if ( dropdown.options[dropdown.selectedIndex].value > 0 ) {
+			location.href = "http://blog.ueda.asia/?cat="+dropdown.options[dropdown.selectedIndex].value;
+		}
+	}
+	dropdown.onchange = onCatChange;
+/* ]]> */
+</script>
+
+</aside><aside id="meta-2" class="widget widget_meta"><h3 class="widget-title">メタ情報</h3>			<ul>
+						<li><a href="http://blog.ueda.asia/wp-login.php">ログイン</a></li>
+			<li><a href="http://blog.ueda.asia/?feed=rss2">投稿の <abbr title="Really Simple Syndication">RSS</abbr></a></li>
+			<li><a href="http://blog.ueda.asia/?feed=comments-rss2">コメントの <abbr title="Really Simple Syndication">RSS</abbr></a></li>
+<li><a href="https://ja.wordpress.org/" title="Powered by WordPress, state-of-the-art semantic personal publishing platform.">WordPress.org</a></li>			</ul>
+</aside>		</div><!-- #secondary -->
+	
+
+	</div><!-- #main .wrapper -->
+	<footer id="colophon" role="contentinfo">
+		<div class="site-info">
+						<a href="http://ja.wordpress.org/" title="セマンティックなパブリッシングツール">Proudly powered by WordPress</a>
+		</div><!-- .site-info -->
+	</footer><!-- #colophon -->
+</div><!-- #page -->
+
+<!-- AdSense Manager v4.0.3 (0.174 seconds.) --><!-- BEGIN: WP Social Bookmarking Light -->
+<script type="text/javascript">
+  window.___gcfg = {lang: 'en-US'};
+
+  (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  })();
+</script>
+<!-- END: WP Social Bookmarking Light -->
+<script type='text/javascript' src='http://blog.ueda.asia/wp-content/themes/twentytwelve/js/navigation.js?ver=20140711'></script>
+
+
+
+</body>
+</html>

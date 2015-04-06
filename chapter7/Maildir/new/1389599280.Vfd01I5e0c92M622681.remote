@@ -1,0 +1,38 @@
+Return-Path: <ueda-ryuichi@aiit.ac.jp>
+X-Original-To: ueda@test.usptomo.com
+Delivered-To: ueda@test.usptomo.com
+Received: from svdns002.aiit.ac.jp (svdns002.aiit.ac.jp [210.190.118.223])
+	by remote.sakura.ne.jp (Postfix) with ESMTP id 8F54A2623FB
+	for <ueda@test.usptomo.com>; Mon, 13 Jan 2014 16:48:00 +0900 (JST)
+Received: from mail-la0-f46.google.com (mail-la0-f46.google.com [209.85.215.46])
+	by svdns002.aiit.ac.jp (Postfix) with ESMTP id A24C5185024B
+	for <ueda@test.usptomo.com>; Mon, 13 Jan 2014 16:47:59 +0900 (JST)
+Received: by mail-la0-f46.google.com with SMTP id b8so3130980lan.5
+        for <ueda@test.usptomo.com>; Sun, 12 Jan 2014 23:47:58 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20130820;
+        h=x-gm-message-state:mime-version:date:message-id:subject:from:to
+         :content-type:content-transfer-encoding;
+        bh=5F+UgcxAPPMU16CKo80aDJdluXoh4Jv8LMYNfOMOm7k=;
+        b=K/VEfR3kaPiKCEc2HJep0twBUxJUF+V+a8ZslIVKA+sRhlbt213udDBqECGafuL8XM
+         HaLks3YTfZAReZbB2Ad47/+thpW4oZ5EqsWxV7cQF5QK1nDJA7VAiVJs0ljxVKYHRfW0
+         WHI9bFKtjj1sICQY96/tKHqNKxVCOiSCoGOh3MdtALcAEx9nDYSIcDESDCqrG7U2YobP
+         I5o6Ub9bfrJxIRRYTqVXxQNJL1lX/zwbzO4dYJvBCOXvWDRTrkhUJI9WI80P7oKGqxv2
+         Y7Bw3kLD3WEwwLJyWuuWuuyHzdZhYOZxtf/uYeHmSHc/X+BRi0Xq8mJhDDfhAQWkGrD7
+         dBTg==
+X-Gm-Message-State: ALoCoQku+ldCu3E6rQu6rF6tjs49OYrVnDYLFnw8bB+J7dgS75QW2IbgVVQTjnGaBk0TegMSRE7h9VDQ57mRM6hNVA89UJHGhpHIWuSNZlxREm5exM04FQD/UjkvofqWoZryhDgKzMIw4269u2BXzcWicEoeh7hNCQ==
+X-Received: by 10.152.22.201 with SMTP id g9mr10127399laf.27.1389599277974;
+        Sun, 12 Jan 2014 23:47:57 -0800 (PST)
+MIME-Version: 1.0
+X-Received: by 10.152.22.201 with SMTP id g9mr10127380laf.27.1389599277567;
+ Sun, 12 Jan 2014 23:47:57 -0800 (PST)
+Received: by 10.114.26.164 with HTTP; Sun, 12 Jan 2014 23:47:57 -0800 (PST)
+Date: Mon, 13 Jan 2014 16:47:57 +0900
+Message-ID: <CAEv3oYU0ty71cjYtUyiN-_PqKSag1o_R7itmz88VywaZH0kDTw@mail.gmail.com>
+Subject: =?ISO-2022-JP?B?GyRCJUYlOSVIJWEhPCVrJEckOSEjGyhC?=
+From: =?ISO-2022-JP?B?GyRCPmVFRE40MGwbKEI=?= <ueda-ryuichi@aiit.ac.jp>
+To: ueda@test.usptomo.com
+Content-Type: text/plain; charset=ISO-2022-JP
+Content-Transfer-Encoding: 7bit
+
+テストテスト。

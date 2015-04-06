@@ -1,0 +1,7 @@
+#!/bin/bash
+
+DELIM=$(cat "$1" | grep 'multipart/mixed' | sed 's/.*=//' | tr -cd '0-9a-f' )
+
+awk -v "d=--$DELIM" '{if($0~d){a++}else{print > "part."a}}' "$1"
+
+ls part.* | xargs -n 1 ./multipart_base64

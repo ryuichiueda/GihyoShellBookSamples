@@ -1,0 +1,11 @@
+#!/bin/bash
+
+tmp=/tmp/$$
+sed -n '1,/^$/p' "$1" | grep -q 'base64' || exit 1
+
+FILENAME=$(sed -n '1,/^$/p' "$1" | sed 's/.*name=//' | head -n 1 | tr -dc '.0-9a-zA-Z')
+[ "$FILENAME" = "" ] && FILENAME="$1".dat
+
+sed -n '/^$/,$p' "$1" |
+tail -n +2            |
+base64 -d > "$FILENAME"
