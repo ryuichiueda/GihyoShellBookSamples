@@ -1,0 +1,15 @@
+#!/bin/bash
+
+#tmpに入ってletter.docxをtmp下に解凍
+cd ./tmp
+unzip ../letter.docx
+
+#変換前の元ファイルを上のディレクトリに退避
+cp ./word/document.xml ../
+
+#リストから名前を読み込んで一つずつ変換、圧縮して上のディレクトリにファイル作成
+cat ../list   |
+while read name ; do
+    sed "s/@@@/$name/" ../document.xml > ./word/document.xml
+    zip -r "../$name.docx" *
+done

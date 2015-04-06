@@ -1,0 +1,9 @@
+#!/bin/bash
+# usage: officegrep <regex> < /dev/stdin (list of file)
+
+while read f ; do
+    unzip -p $f            |
+    tr '>' '\n'            |
+    grep "$1"              |
+    awk -v f="$f" '{print f ":" $0}'
+done
