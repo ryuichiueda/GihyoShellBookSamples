@@ -1,0 +1,30 @@
+#!/bin/bash 
+
+error-check(){
+	[ $(plus ${PIPESTATUS[@]}) -eq 0 ] && return
+	echo "error: $0" >&2
+	exit 1
+}
+
+retu-files(){
+	xargs -I@ cat $(dirname $0)/../data/@	|
+	retu					|
+	diff <(echo "$1") -
+	[ $(plus ${PIPESTATUS[@]}) -eq 0 ] || exit 1
+}
+
+###2列のファイル###
+cat << FIN | retu-files 2
+event.attend
+member.board
+member.name
+member.number
+member.status
+FIN
+error-check
+
+###3列のファイル###
+cat << FIN | retu-files 3
+event.name
+FIN
+error-check

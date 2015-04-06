@@ -1,0 +1,43 @@
+#!/bin/bash -xv
+#usage: ./add-member <会員の名前>
+
+tmp="$(dirname $0)/../tmp/$$"
+data="$(dirname $0)/../data"
+bkup="$(dirname $0)/../backup"
+
+error-check(){
+	[ $(plus ${PIPESTATUS[@]}) -eq 0 ] && return
+	echo "error: $0" >&2
+	rm -f $tmp-*
+	exit 1
+}
+
+###新しいマスタの作成###
+ADDNAME="$(tr -d ' ' <<< $1)"
+ID=$(date +%Y%m%d%H%M%S.%N | grep -E '^[0-9]{14}\.[0-9]{9}$')
+[ "$ADDNAME" != "" ] ; error-check
+[ "$ID" != "" ] ; error-check
+echo "$ID" "$ADDNAME"   | cat $data/member.name -   > $tmp-name ; error-check
+echo "$ID" "番号未発行" | cat $data/member.status - > $tmp-status ; error-check
+echo "$ID" "番号未発行" | cat $data/member.number - > $tmp-number ; error-check
+
+###チェック###
+[ "$(retu $tmp-name)" = "2" ] &&
+[ "$(retu $tmp-status)" = "2" ] &&
+[ "$(retu $tmp-number)" = "2" ] &&
+sort -k1,1 -c $tmp-name &&
+sort -k1,1 -c $tmp-status &&
+sort -k1,1 -c $tmp-name ; error-check
+
+###バックアップ###
+cp $data/member.name $bkup/member.name.$ID &&
+cp $data/member.status $bkup/member.status.$ID &&
+cp $data/member.number $bkup/member.number.$ID ; error-check
+
+###更新###
+mv $tmp-name $data/member.name &&
+mv $tmp-status $data/member.status &&
+mv $tmp-number $data/member.number ; error-check
+
+rm -f $tmp-*
+exit 0

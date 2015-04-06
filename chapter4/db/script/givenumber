@@ -1,0 +1,47 @@
+#!/bin/bash -xv
+#usage: ./givenumber <DB内部のID>
+
+tmp="$(dirname $0)/../tmp/$$"
+data="$(dirname $0)/../data"
+bkup="$(dirname $0)/../backup"
+
+error-check(){
+	[ $(plus ${PIPESTATUS[@]}) -eq 0 ] && return
+	echo "error: $0" >&2
+	rm -f $tmp-*
+	exit 1
+}
+
+###引数で与えられたIDが本当にマスタにあるか確認###
+ID=$(awk -v "id=$1" 'id==$1&&$2=="番号未発行"{print $1}' $data/member.number)
+[ "$ID" != "" ] ; error-check
+
+###会員番号###
+LASTNUM="$(self 2 $data/member.number | grep -E '^[0-9]+$' | sort | tail -n 1)"
+NEWNUM="$(seq -w $LASTNUM 9999999 | head -n 2 | tail -n 1 | grep -E '^[0-9]+$')"
+[ "$NEWNUM" != "" ] ; error-check
+
+###新しいマスタ作成###
+echo "$ID" "$NEWNUM"			|
+sort -ms -k1,1 $data/member.number -	|
+getlast 1 1	> $tmp-number
+error-check
+
+echo "$ID" "正会員"			|
+sort -ms -k1,1 $data/member.status -	|
+getlast 1 1	> $tmp-status
+error-check
+
+###バックアップ&更新###
+[ "$(retu $tmp-number)" -eq 2 ] &&
+[ "$(retu $tmp-status)" -eq 2 ] &&
+sort -c -k1,1 $tmp-number &&
+sort -c -k1,1 $tmp-status &&
+cp $data/member.number $bkup/member.number.$(date +%Y%m%d%H%M%S.%N) &&
+cp $data/member.status $bkup/member.status.$(date +%Y%m%d%H%M%S.%N) &&
+mv $tmp-number $data/member.number &&
+mv $tmp-status $data/member.status
+error-check
+
+rm -f $tmp-*
+exit 0

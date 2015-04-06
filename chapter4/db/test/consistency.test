@@ -1,0 +1,22 @@
+#!/bin/bash 
+
+dir="$(dirname $0)/../data"
+
+error-check(){
+	[ $(plus ${PIPESTATUS[@]}) -eq 0 ] && return
+	echo "error: $0 $1" >&2
+	exit 1
+}
+
+###TEST1: マスタに無いIDがないかチェック###
+
+#member.nameをマスタとして、他と比較
+{
+	self 2 $dir/event.attend
+	self 1 $dir/member.board
+	self 1 $dir/member.number
+	self 1 $dir/member.status
+}		|
+sort -u		|
+diff <(self 1 $dir/member.name) -
+error-check "TEST1"
