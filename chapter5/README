@@ -1,0 +1,10 @@
+TESTDATAは次のリンクからダウンロードしてお使いください。
+もちろん、wget(1)で。
+
+- http://blog.ueda.asia/misc/TESTDATA.gz
+
+
+また、apacheのログは取り扱い注意情報が含まれているので、
+以下のNASAのサイト等、公開しているものを入手願います。
+
+- http://ita.ee.lbl.gov/html/contrib/NASA-HTTP.html
