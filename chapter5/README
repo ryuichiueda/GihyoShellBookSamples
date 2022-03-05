@@ -1,7 +1,7 @@
 TESTDATAは次のリンクからダウンロードしてお使いください。
 もちろん、wget(1)で。
 
-- http://blog.ueda.asia/misc/TESTDATA.gz
+- https://file.ueda.tech/DATA_COLLECTION/TESTDATA.gz
 
 
 また、apacheのログは取り扱い注意情報が含まれているので、
